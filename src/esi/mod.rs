@@ -47,7 +47,7 @@ pub async fn search(
     client: &Client,
     url: &String,
     names: &Vec<String>,
-) -> anyhow::Result<universe::SearchResult> {
+) -> anyhow::Result<common::SearchResult> {
     debug!("url: {url}");
 
     let request = client
@@ -80,15 +80,74 @@ impl Esi {
     }
 
     // Get ids by names
-    pub async fn search(&self, names: &Vec<String>) -> anyhow::Result<universe::SearchResult> {
-        search(&self.client, &format!("{ROOT}/universe/ids/?{PARAM}"), names).await
+    pub async fn search(&self, names: &Vec<String>) -> anyhow::Result<common::SearchResult> {
+        search(
+            &self.client,
+            &format!("{ROOT}/universe/ids/?{PARAM}"),
+            names,
+        )
+        .await
     }
 
     // Get Asteroid belt information
-    pub async fn asteroid_belts(&self, id: u32) -> anyhow::Result<universe::AsteroidBelts> {
+    pub async fn asteroid_belt(&self, id: u32) -> anyhow::Result<universe::AsteroidBelts> {
         load(
             &self.client,
             &format!("{ROOT}/universe/asteroid_belts/{id}/?{PARAM}"),
+        )
+        .await
+    }
+
+    // Get Solar System information
+    pub async fn system(&self, id: u32) -> anyhow::Result<universe::System> {
+        load(
+            &self.client,
+            &format!("{ROOT}/universe/systems/{id}/?{PARAM}"),
+        )
+        .await
+    }
+
+    // Get Star information
+    pub async fn star(&self, id: u32) -> anyhow::Result<universe::Star> {
+        load(
+            &self.client,
+            &format!("{ROOT}/universe/stars/{id}/?{PARAM}"),
+        )
+        .await
+    }
+
+    // Get Planet information
+    pub async fn planet(&self, id: u32) -> anyhow::Result<universe::Planet> {
+        load(
+            &self.client,
+            &format!("{ROOT}/universe/planets/{id}/?{PARAM}"),
+        )
+        .await
+    }
+
+    // Get Moon information
+    pub async fn moon(&self, id: u32) -> anyhow::Result<universe::Moon> {
+        load(
+            &self.client,
+            &format!("{ROOT}/universe/moons/{id}/?{PARAM}"),
+        )
+        .await
+    }
+
+    // Get Stargate information
+    pub async fn stargate(&self, id: u32) -> anyhow::Result<universe::Stargate> {
+        load(
+            &self.client,
+            &format!("{ROOT}/universe/stargates/{id}/?{PARAM}"),
+        )
+        .await
+    }
+
+    // Get Station information
+    pub async fn station(&self, id: u32) -> anyhow::Result<universe::Station> {
+        load(
+            &self.client,
+            &format!("{ROOT}/universe/stations/{id}/?{PARAM}"),
         )
         .await
     }
