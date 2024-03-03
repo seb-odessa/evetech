@@ -3,13 +3,15 @@ use evetech::esi::Esi;
 use std::env;
 
 enum ObjectKinds {
-    System,
-    Star,
-    Planet,
-    Moon,
+    Systems,
+    Stars,
+    Planets,
+    Moons,
     AsteroidBelt,
     Stargates,
     Stations,
+    Constellations,
+    Regions,
 }
 
 #[tokio::main]
@@ -25,13 +27,15 @@ async fn main() -> anyhow::Result<()> {
                 "status" => status(&esi).await,
                 "search" => search(&esi, tail).await,
                 "systems" => systems(&esi, tail).await,
-                "stars" => objects(&esi, ObjectKinds::Star, tail).await,
-                "planets" => objects(&esi, ObjectKinds::Planet, tail).await,
-                "moons" => objects(&esi, ObjectKinds::Moon, tail).await,
+                "stars" => objects(&esi, ObjectKinds::Stars, tail).await,
+                "planets" => objects(&esi, ObjectKinds::Planets, tail).await,
+                "moons" => objects(&esi, ObjectKinds::Moons, tail).await,
                 "belts" => objects(&esi, ObjectKinds::AsteroidBelt, tail).await,
                 "asteroid_belts" => objects(&esi, ObjectKinds::AsteroidBelt, tail).await,
                 "stargates" => objects(&esi, ObjectKinds::Stargates, tail).await,
                 "stations" => objects(&esi, ObjectKinds::Stations, tail).await,
+                "constellations" => objects(&esi, ObjectKinds::Constellations, tail).await,
+                "regions" => objects(&esi, ObjectKinds::Regions, tail).await,
                 _ => wrong_command(cmd, command),
             }
         } else {
@@ -53,6 +57,7 @@ fn usage(cmd: String) -> anyhow::Result<()> {
     println!("\t{cmd} stargates <Id>...");
     println!("\t{cmd} stations <Id>...");
     println!("\t{cmd} belts <Id>...");
+    println!("\t{cmd} regions <Id>...");
     println!("\t{cmd} asteroid_belts <Id>...");
     Ok(())
 }
@@ -109,7 +114,7 @@ async fn systems(esi: &Esi, names: Vec<String>) -> anyhow::Result<()> {
     } else {
         for maybe_id in names {
             if let Ok(id) = maybe_id.parse::<u32>() {
-                print(esi, &ObjectKinds::System, id).await?;
+                print(esi, &ObjectKinds::Systems, id).await?;
             } else {
                 println!("{} is not an `Id`", maybe_id);
             }
@@ -120,13 +125,15 @@ async fn systems(esi: &Esi, names: Vec<String>) -> anyhow::Result<()> {
 
 async fn print(esi: &Esi, kind: &ObjectKinds, id: u32) -> anyhow::Result<()> {
     match kind {
-        ObjectKinds::System => println!("{}", esi.system(id).await?),
-        ObjectKinds::Star => println!("{}", esi.star(id).await?),
-        ObjectKinds::Planet => println!("{}", esi.planet(id).await?),
-        ObjectKinds::Moon => println!("{}", esi.moon(id).await?),
+        ObjectKinds::Systems => println!("{}", esi.system(id).await?),
+        ObjectKinds::Stars => println!("{}", esi.star(id).await?),
+        ObjectKinds::Planets => println!("{}", esi.planet(id).await?),
+        ObjectKinds::Moons => println!("{}", esi.moon(id).await?),
         ObjectKinds::AsteroidBelt => println!("{}", esi.asteroid_belt(id).await?),
         ObjectKinds::Stargates => println!("{}", esi.stargate(id).await?),
         ObjectKinds::Stations => println!("{}", esi.station(id).await?),
+        ObjectKinds::Constellations => println!("{}", esi.constellation(id).await?),
+        ObjectKinds::Regions => println!("{}", esi.region(id).await?),
     }
     Ok(())
 }

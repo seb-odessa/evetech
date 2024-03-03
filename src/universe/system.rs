@@ -10,7 +10,7 @@ pub struct System {
     pub security_status: f32,
     pub security_class: Option<String>,
     pub star_id: Option<u32>,
-    pub planets: Option<Vec<PlanetSurrounding>>,
+    pub planets: Option<Vec<CelestialBodies>>,
     pub stargates: Option<Vec<u32>>,
     pub stations: Option<Vec<u32>>,
 }
@@ -37,12 +37,12 @@ impl fmt::Display for System {
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Eq)]
-pub struct PlanetSurrounding {
+pub struct CelestialBodies {
     pub planet_id: u32,
     pub asteroid_belts: Option<Vec<u32>>,
     pub moons: Option<Vec<u32>>,
 }
-impl fmt::Display for PlanetSurrounding {
+impl fmt::Display for CelestialBodies {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "  Planet Id: {}", self.planet_id)?;
         crate::universe::write("  Belts Ids", &self.asteroid_belts, f)?;
@@ -53,10 +53,17 @@ impl fmt::Display for PlanetSurrounding {
 
 #[cfg(test)]
 mod tests {
+    use crate::esi::Esi;
 
     #[tokio::test]
     async fn system() {
-        let system = crate::esi::Esi::new().system(30002537).await;
-        assert!(system.is_ok());
+        let maybe_system = Esi::new().system(30002720).await;
+        assert!(maybe_system.is_ok());
+        let system = maybe_system.unwrap();
+        assert_eq!(system.name, "Thelan");
+        assert_eq!(system.system_id, 30002720);
+        assert_eq!(system.constellation_id, 20000398);
+        assert!(system.security_status < 0.3);
+        assert_eq!(system.star_id, Some(40172880));
     }
 }

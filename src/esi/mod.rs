@@ -151,6 +151,25 @@ impl Esi {
         )
         .await
     }
+
+    // Get Constellation information
+    pub async fn constellation(&self, id: u32) -> anyhow::Result<universe::Constellation> {
+        load(
+            &self.client,
+            &format!("{ROOT}/universe/constellations/{id}/?{PARAM}"),
+        )
+        .await
+    }
+
+    // Get Region information
+    pub async fn region(&self, id: u32) -> anyhow::Result<universe::Region> {
+        load(
+            &self.client,
+            &format!("{ROOT}/universe/regions/{id}/?{PARAM}"),
+        )
+        .await
+    }
+
 }
 
 #[cfg(test)]
