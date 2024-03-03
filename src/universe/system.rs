@@ -50,3 +50,13 @@ impl fmt::Display for PlanetSurrounding {
         write!(f, "")
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    #[tokio::test]
+    async fn system() {
+        let system = crate::esi::Esi::new().system(30002537).await;
+        assert!(system.is_ok());
+    }
+}
