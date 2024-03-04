@@ -170,6 +170,32 @@ impl Esi {
         .await
     }
 
+    // Get Type information
+    pub async fn item(&self, id: u32) -> anyhow::Result<universe::Type> {
+        load(
+            &self.client,
+            &format!("{ROOT}/universe/types/{id}/?{PARAM}"),
+        )
+        .await
+    }
+
+    // Get Group information
+    pub async fn group(&self, id: u32) -> anyhow::Result<universe::Group> {
+        load(
+            &self.client,
+            &format!("{ROOT}/universe/groups/{id}/?{PARAM}"),
+        )
+        .await
+    }
+
+    // Get Categories information
+    pub async fn category(&self, id: u32) -> anyhow::Result<universe::Category> {
+        load(
+            &self.client,
+            &format!("{ROOT}/universe/categories/{id}/?{PARAM}"),
+        )
+        .await
+    }
 }
 
 #[cfg(test)]

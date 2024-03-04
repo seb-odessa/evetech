@@ -12,6 +12,9 @@ enum ObjectKinds {
     Stations,
     Constellations,
     Regions,
+    Type,
+    Group,
+    Category,
 }
 
 #[tokio::main]
@@ -36,6 +39,9 @@ async fn main() -> anyhow::Result<()> {
                 "stations" => objects(&esi, ObjectKinds::Stations, tail).await,
                 "constellations" => objects(&esi, ObjectKinds::Constellations, tail).await,
                 "regions" => objects(&esi, ObjectKinds::Regions, tail).await,
+                "types" => objects(&esi, ObjectKinds::Type, tail).await,
+                "groups" => objects(&esi, ObjectKinds::Group, tail).await,
+                "categories" => objects(&esi, ObjectKinds::Category, tail).await,
                 _ => wrong_command(cmd, command),
             }
         } else {
@@ -58,6 +64,7 @@ fn usage(cmd: String) -> anyhow::Result<()> {
     println!("\t{cmd} stations <Id>...");
     println!("\t{cmd} belts <Id>...");
     println!("\t{cmd} regions <Id>...");
+    println!("\t{cmd} types <Id>...");
     println!("\t{cmd} asteroid_belts <Id>...");
     Ok(())
 }
@@ -134,6 +141,9 @@ async fn print(esi: &Esi, kind: &ObjectKinds, id: u32) -> anyhow::Result<()> {
         ObjectKinds::Stations => println!("{}", esi.station(id).await?),
         ObjectKinds::Constellations => println!("{}", esi.constellation(id).await?),
         ObjectKinds::Regions => println!("{}", esi.region(id).await?),
+        ObjectKinds::Type => println!("{}", esi.item(id).await?),
+        ObjectKinds::Group => println!("{}", esi.group(id).await?),
+        ObjectKinds::Category => println!("{}", esi.category(id).await?),
     }
     Ok(())
 }
