@@ -26,5 +26,3 @@ pub use stargate::StargateDestination;
 pub use station::Station;
 pub use system::CelestialBodies;
 pub use system::System;
-
-

@@ -5,6 +5,14 @@ pub struct Object {
     pub id: u32,
     pub name: String,
 }
+impl Object {
+    pub fn new<T: Into<String>>(id: u32, name: T) -> Self {
+        Self {
+            id: id,
+            name: name.into(),
+        }
+    }
+}
 impl fmt::Display for Object {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: {}", self.id, self.name)

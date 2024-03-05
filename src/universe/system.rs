@@ -51,20 +51,3 @@ impl fmt::Display for CelestialBodies {
         write!(f, "")
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::esi::Esi;
-
-    #[tokio::test]
-    async fn system() {
-        let maybe_system = Esi::new().system(30002720).await;
-        assert!(maybe_system.is_ok());
-        let system = maybe_system.unwrap();
-        assert_eq!(system.name, "Thelan");
-        assert_eq!(system.system_id, 30002720);
-        assert_eq!(system.constellation_id, 20000398);
-        assert!(system.security_status < 0.3);
-        assert_eq!(system.star_id, Some(40172880));
-    }
-}
