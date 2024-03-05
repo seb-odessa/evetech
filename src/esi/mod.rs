@@ -2,11 +2,38 @@ use crate::{common, universe};
 
 use log::{debug, error};
 use reqwest::{header, Client, RequestBuilder, StatusCode};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+
+pub mod client;
+
+pub use client::EveSwaggerClient;
+
+pub trait ApiClient {
+    fn process<T>(
+        request: RequestBuilder,
+    ) -> impl std::future::Future<Output = anyhow::Result<T>> + Send
+    where
+        T: Debug + for<'de> Deserialize<'de>;
+
+    fn get<T>(&self, url: &String) -> impl std::future::Future<Output = anyhow::Result<T>> + Send
+    where
+        T: Debug + for<'de> Deserialize<'de>;
+
+    fn post<I, O>(&self,
+        url: &String,
+        names: I,
+    ) -> impl std::future::Future<Output = anyhow::Result<O>> + Send
+    where
+        I: Debug + for<'se> Serialize + Send,
+        O: Debug + for<'de> Deserialize<'de>;
+}
+
 
 pub const ROOT: &'static str = "https://esi.evetech.net/latest";
 pub const PARAM: &'static str = "datasource=tranquility&language=en";
+
+
 
 async fn process<T>(request: RequestBuilder) -> anyhow::Result<T>
 where
@@ -60,6 +87,8 @@ pub async fn search(
     process(request).await
 }
 
+
+
 pub struct Esi {
     client: Client,
 }
@@ -68,10 +97,6 @@ impl Esi {
         Self {
             client: Client::new(),
         }
-    }
-
-    pub fn description(&self) -> String {
-        String::from("EVE Swagger Interface (ESI)")
     }
 
     // Retrieve the uptime and player counts

@@ -1,5 +1,6 @@
-use std::fmt;
 use crate::common::Position;
+use crate::universe::utils;
+use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Station {
@@ -38,10 +39,7 @@ impl fmt::Display for Station {
         if let Some(num) = self.reprocessing_station_take {
             writeln!(f, "Reprocessing Station Take: {}", num)?;
         }
-        crate::universe::write::<String>(" Services", &self.services, f)?;
-        // if let Some(services) = &self.services {
-        //     writeln!(f, "Services: {}", services)?;
-        // }
+        utils::write::<String>(" Services", &self.services, f)?;
         writeln!(f, "System Id: {}", self.system_id)?;
         writeln!(f, "Type Id: {}", self.type_id)
     }

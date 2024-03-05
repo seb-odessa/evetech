@@ -1,4 +1,4 @@
-use crate::universe;
+use crate::universe::utils;
 use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
@@ -59,8 +59,8 @@ impl fmt::Display for Type {
         }
         writeln!(f, "Description: {}", self.description)?;
 
-        universe::write("Dogma Attributes", &self.dogma_attributes, f)?;
-        universe::write("Dogma Effects", &self.dogma_effects, f)?;
+        utils::write("Dogma Attributes", &self.dogma_attributes, f)?;
+        utils::write("Dogma Effects", &self.dogma_effects, f)?;
 
         write!(f, "")
     }

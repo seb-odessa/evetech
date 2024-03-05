@@ -1,5 +1,6 @@
 use std::fmt;
 use crate::common::Position;
+use crate::universe::utils;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct System {
@@ -31,8 +32,8 @@ impl fmt::Display for System {
                 write!(f, "{}", planet)?;
             }
         }
-        crate::universe::write(" Stargates", &self.stargates, f)?;
-        crate::universe::write(" Stations", &self.stations, f)
+        utils::write(" Stargates", &self.stargates, f)?;
+        utils::write(" Stations", &self.stations, f)
     }
 }
 
@@ -45,8 +46,8 @@ pub struct CelestialBodies {
 impl fmt::Display for CelestialBodies {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "  Planet Id: {}", self.planet_id)?;
-        crate::universe::write("  Belts Ids", &self.asteroid_belts, f)?;
-        crate::universe::write("  Moons Ids", &self.moons, f)?;
+        utils::write("  Belts Ids", &self.asteroid_belts, f)?;
+        utils::write("  Moons Ids", &self.moons, f)?;
         write!(f, "")
     }
 }

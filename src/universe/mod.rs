@@ -1,6 +1,3 @@
-use std::fmt;
-use std::fmt::Display;
-
 pub mod belt;
 pub mod category;
 pub mod constellation;
@@ -13,6 +10,7 @@ pub mod star;
 pub mod stargate;
 pub mod station;
 pub mod system;
+pub mod utils;
 
 pub use belt::AsteroidBelts;
 pub use category::Category;
@@ -29,18 +27,4 @@ pub use station::Station;
 pub use system::CelestialBodies;
 pub use system::System;
 
-fn write<T>(title: &str, vec: &Option<Vec<T>>, f: &mut fmt::Formatter) -> fmt::Result
-where
-    T: Display + ToString,
-{
-    if let Some(ids) = &vec {
-        let joined = ids
-            .iter()
-            .map(|id| id.to_string())
-            .collect::<Vec<_>>()
-            .join(" ");
-        writeln!(f, "{title}: {}", joined)
-    } else {
-        write!(f, "")
-    }
-}
+

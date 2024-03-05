@@ -1,5 +1,5 @@
+use crate::universe::utils;
 use std::fmt;
-
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Region {
@@ -11,7 +11,7 @@ pub struct Region {
 impl fmt::Display for Region {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "{}: {}", self.region_id, self.name)?;
-        crate::universe::write("  Constellations", &Some(self.constellations.clone()), f)?;
+        utils::write("  Constellations", &Some(self.constellations.clone()), f)?;
         if let Some(description) = &self.description {
             writeln!(f, "Description: {}", description)?;
         }

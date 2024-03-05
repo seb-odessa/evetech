@@ -1,4 +1,4 @@
-use crate::universe;
+use crate::universe::utils;
 use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
@@ -12,6 +12,6 @@ impl fmt::Display for Category {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "{}: {}", self.category_id, self.name)?;
         writeln!(f, "Published: {}", self.published)?;
-        universe::write("Types", &Some(self.groups.clone()), f)
+        utils::write("Types", &Some(self.groups.clone()), f)
     }
 }

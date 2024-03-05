@@ -1,5 +1,6 @@
 use std::fmt;
 use crate::common::Position;
+use crate::universe::utils;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Constellation {
@@ -14,6 +15,6 @@ impl fmt::Display for Constellation {
         writeln!(f, "{}: {}", self.constellation_id, self.name)?;
         writeln!(f, "Position: {}", self.position)?;
         writeln!(f, "Region Id: {}", self.region_id)?;
-        crate::universe::write("  Systems", &Some(self.systems.clone()), f)
+        utils::write("  Systems", &Some(self.systems.clone()), f)
     }
 }
