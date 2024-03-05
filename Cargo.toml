@@ -1,6 +1,6 @@
 [package]
 name = "evetech"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [dependencies]
@@ -12,6 +12,7 @@ edition = "2021"
     serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
     serde_derive = { version = "1.0" }
     tokio = { version = "1", features = ["full"] }
+    clap = "4.5.1"
 
 [dev-dependencies]
     approx = "0.5"
