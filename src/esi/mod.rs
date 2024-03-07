@@ -26,8 +26,9 @@ pub trait ApiClient {
 
 pub trait Searchable<T> {
     type Output;
-    fn load(&self, names: Vec<String>)
-        -> impl Future<Output = anyhow::Result<Self::Output>> + Send;
+    fn load<I>(&self, names: Vec<I>) -> impl Future<Output = anyhow::Result<Self::Output>> + Send
+    where
+        I: Debug + for<'se> Serialize + Send;
 }
 
 pub trait Loadable<T> {

@@ -12,7 +12,7 @@ pub mod station;
 pub mod system;
 pub mod utils;
 
-pub use belt::AsteroidBelts;
+pub use belt::AsteroidBelt;
 pub use category::Category;
 pub use constellation::Constellation;
 pub use group::Group;

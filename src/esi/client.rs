@@ -83,11 +83,21 @@ impl ApiClient for EveSwaggerClient {
 
 impl Searchable<common::SearchResult> for EveSwaggerClient {
     type Output = common::SearchResult;
-    fn load(
-        &self,
-        names: Vec<String>,
-    ) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load<I>(&self, names: Vec<I>) -> impl Future<Output = anyhow::Result<Self::Output>> + Send
+    where
+        I: Debug + for<'se> Serialize + Send,
+    {
         self.post(format!("{UNIVERSE}/ids/?{PARAM}"), names)
+    }
+}
+
+impl Searchable<common::Names> for EveSwaggerClient {
+    type Output = Vec<common::Names>;
+    fn load<I>(&self, names: Vec<I>) -> impl Future<Output = anyhow::Result<Self::Output>> + Send
+    where
+        I: Debug + for<'se> Serialize + Send,
+    {
+        self.post(format!("{UNIVERSE}/names/?{PARAM}"), names)
     }
 }
 
@@ -119,7 +129,6 @@ impl LoadableById<universe::Region> for EveSwaggerClient {
     }
 }
 
-
 impl LoadableById<universe::Star> for EveSwaggerClient {
     type Output = universe::Star;
     fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
@@ -134,8 +143,8 @@ impl LoadableById<universe::Planet> for EveSwaggerClient {
     }
 }
 
-impl LoadableById<universe::AsteroidBelts> for EveSwaggerClient {
-    type Output = universe::AsteroidBelts;
+impl LoadableById<universe::AsteroidBelt> for EveSwaggerClient {
+    type Output = universe::AsteroidBelt;
     fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{UNIVERSE}/asteroid_belts/{id}/?{PARAM}"))
     }
@@ -183,7 +192,6 @@ impl LoadableById<universe::Category> for EveSwaggerClient {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -209,6 +217,23 @@ mod tests {
             obj.characters,
             Some(vec![Object::new(2114350216, "Seb Odessa")])
         );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn names() -> anyhow::Result<()> {
+        type Object = crate::common::Names;
+        type Category = crate::common::names::Categories;
+        let esc = EveSwaggerClient::new();
+        let ids = vec![95465499];
+        let vec = <EveSwaggerClient as Searchable<Object>>::load(&esc, ids).await?;
+        let first = vec.first();
+        assert!(first.is_some());
+        let obj = first.unwrap();
+        assert_eq!(1, vec.len());
+        assert_eq!(obj.id, 95465499);
+        assert_eq!(obj.name, "CCP Bartender");
+        assert_eq!(obj.category, Category::Character);
         Ok(())
     }
 
@@ -265,7 +290,7 @@ mod tests {
 
     #[tokio::test]
     async fn asteroid_belt() -> anyhow::Result<()> {
-        type Object = crate::universe::AsteroidBelts;
+        type Object = crate::universe::AsteroidBelt;
         let esc = EveSwaggerClient::new();
         let obj = <EveSwaggerClient as LoadableById<Object>>::load(&esc, 40132822).await?;
         assert_eq!(obj.system_id, 30002080);

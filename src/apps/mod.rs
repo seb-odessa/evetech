@@ -7,6 +7,12 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::LinkedList;
 
+pub mod route;
+pub mod waypoint;
+
+pub use route::Route;
+pub use waypoint::WayPoint;
+
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct Place {
     id: i32,

@@ -12,6 +12,10 @@ impl Position {
         Self { x, y, z }
     }
 
+    pub fn zero() -> Self{
+        Self::new(0.0, 0.0, 0.0)
+    }
+
     pub fn distance(a: &Self, b: &Self) -> f64 {
         ((a.x - b.x).powi(2) + (a.y - b.y).powi(2) + (a.z - b.z).powi(2)).sqrt()
     }
@@ -34,7 +38,7 @@ mod tests {
 
     #[test]
     fn distance() {
-        let zero = Position::new(0.0, 0.0, 0.0);
+        let zero = Position::zero();
         let one_x = Position::new(1.0, 0.0, 0.0);
         let one_y = Position::new(0.0, 1.0, 0.0);
         let one_z = Position::new(0.0, 0.0, 1.0);
@@ -47,7 +51,7 @@ mod tests {
 
     #[test]
     fn distance_to() {
-        let zero = Position::new(0.0, 0.0, 0.0);
+        let zero = Position::zero();
         let one_x = Position::new(1.0, 0.0, 0.0);
         let one_y = Position::new(0.0, 1.0, 0.0);
         let one_z = Position::new(0.0, 0.0, 1.0);

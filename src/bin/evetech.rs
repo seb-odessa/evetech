@@ -80,7 +80,7 @@ async fn main() -> anyhow::Result<()> {
     } else if args.cmd_moon {
         report::<universe::Moon>(&esc, args.arg_ids.clone()).await?;
     } else if args.cmd_belt {
-        report::<universe::AsteroidBelts>(&esc, args.arg_ids.clone()).await?;
+        report::<universe::AsteroidBelt>(&esc, args.arg_ids.clone()).await?;
     } else if args.cmd_stargate {
         report::<universe::Stargate>(&esc, args.arg_ids.clone()).await?;
     } else if args.cmd_station {
