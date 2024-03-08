@@ -1,36 +1,39 @@
 use docopt::Docopt;
-use log::debug;
 use serde::Deserialize;
 
 use evetech::common;
-use evetech::esi::EveSwaggerClient;
+use evetech::esi::EveSwaggerClient as EveClient;
 use evetech::esi::Loadable;
 use evetech::esi::LoadableById;
 use evetech::esi::Searchable;
 use evetech::universe;
 
 use std::fmt::Display;
+use std::any::TypeId;
 
 const USAGE: &'static str = "
 Evetech CLI Client
 
 Usage:
-  evetech status
-  evetech search <names>...
-  evetech system <ids>...
-  evetech star <ids>...
-  evetech planet <ids>...
-  evetech moon <ids>...
-  evetech belt <ids>...
-  evetech stargate <ids>...
-  evetech station <ids>...
-  evetech constellation <ids>...
-  evetech region <ids>...
-  evetech type <ids>...
-  evetech group <ids>...
-  evetech category <ids>...
-  evetech (-h | --help)
-  evetech --version
+    evetech <command> <args>...
+    evetech (-h | --help)
+    evetech --version
+
+Commands
+    evetech status
+    evetech search <names>...
+    evetech system <ids>...
+    evetech star <ids>...
+    evetech planet <ids>...
+    evetech moon <ids>...
+    evetech belt <ids>...
+    evetech stargate <ids>...
+    evetech station <ids>...
+    evetech constellation <ids>...
+    evetech region <ids>...
+    evetech type <ids>...
+    evetech group <ids>...
+    evetech category <ids>...
 
 Options:
   -h --help     Show this screen.
@@ -39,23 +42,28 @@ Options:
 
 #[derive(Debug, Deserialize)]
 struct Args {
-    cmd_status: bool,
-    cmd_search: bool,
-    cmd_system: bool,
-    cmd_star: bool,
-    cmd_planet: bool,
-    cmd_moon: bool,
-    cmd_belt: bool,
-    cmd_stargate: bool,
-    cmd_station: bool,
-    cmd_constellation: bool,
-    cmd_region: bool,
-    cmd_type: bool,
-    cmd_group: bool,
-    cmd_category: bool,
-    arg_ids: Vec<u32>,
-    arg_names: Vec<String>,
- }
+    arg_command: Command,
+    arg_args: Vec<String>,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Hash)]
+enum Command {
+    Status,
+    Search,
+    // ids
+    System,
+    Star,
+    Planet,
+    Moon,
+    Belt,
+    Stargate,
+    Station,
+    Constellation,
+    Region,
+    Type,
+    Group,
+    Category,
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -64,50 +72,40 @@ async fn main() -> anyhow::Result<()> {
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
 
-    debug!("{:?}", args);
+    println!("{:?}", args);
 
-    let esc: EveSwaggerClient = EveSwaggerClient::new();
-    if args.cmd_status {
-        status(&esc).await?;
-    } else if args.cmd_search {
-        search(&esc, args.arg_names.clone()).await?;
-    } else if args.cmd_system {
-        report::<universe::System>(&esc, args.arg_ids.clone()).await?;
-    } else if args.cmd_star {
-        report::<universe::Star>(&esc, args.arg_ids.clone()).await?;
-    } else if args.cmd_planet {
-        report::<universe::Planet>(&esc, args.arg_ids.clone()).await?;
-    } else if args.cmd_moon {
-        report::<universe::Moon>(&esc, args.arg_ids.clone()).await?;
-    } else if args.cmd_belt {
-        report::<universe::AsteroidBelt>(&esc, args.arg_ids.clone()).await?;
-    } else if args.cmd_stargate {
-        report::<universe::Stargate>(&esc, args.arg_ids.clone()).await?;
-    } else if args.cmd_station {
-        report::<universe::Station>(&esc, args.arg_ids.clone()).await?;
-    } else if args.cmd_constellation {
-        report::<universe::Constellation>(&esc, args.arg_ids.clone()).await?;
-    } else if args.cmd_region {
-        report::<universe::Region>(&esc, args.arg_ids.clone()).await?;
-    } else if args.cmd_type {
-        report::<universe::Type>(&esc, args.arg_ids.clone()).await?;
-    } else if args.cmd_group {
-        report::<universe::Group>(&esc, args.arg_ids.clone()).await?;
-    } else if args.cmd_category {
-        report::<universe::Category>(&esc, args.arg_ids.clone()).await?;
+    let esc: EveClient = EveClient::new();
+    match args.arg_command {
+        Command::Status => status(&esc).await?,
+        Command::Search => search(&esc, args.arg_args.clone()).await?,
+        // ids
+        Command::System => display::<universe::System>(&esc, args.arg_args.clone()).await?,
+        Command::Star => display::<universe::Star>(&esc, args.arg_args.clone()).await?,
+        Command::Planet => display::<universe::Planet>(&esc, args.arg_args.clone()).await?,
+        Command::Moon => display::<universe::Moon>(&esc, args.arg_args.clone()).await?,
+        Command::Belt => display::<universe::AsteroidBelt>(&esc, args.arg_args.clone()).await?,
+        Command::Stargate => display::<universe::Stargate>(&esc, args.arg_args.clone()).await?,
+        Command::Station => display::<universe::Station>(&esc, args.arg_args.clone()).await?,
+        Command::Constellation => {
+            display::<universe::Constellation>(&esc, args.arg_args.clone()).await?
+        }
+        Command::Region => display::<universe::Region>(&esc, args.arg_args.clone()).await?,
+        Command::Type => display::<universe::Type>(&esc, args.arg_args.clone()).await?,
+        Command::Group => display::<universe::Group>(&esc, args.arg_args.clone()).await?,
+        Command::Category => display::<universe::Category>(&esc, args.arg_args.clone()).await?,
     }
 
     Ok(())
 }
 
-async fn status(esc: &EveSwaggerClient) -> anyhow::Result<()> {
-    let status = <EveSwaggerClient as Loadable<common::Status>>::load(&esc).await?;
+async fn status(esc: &EveClient) -> anyhow::Result<()> {
+    let status = <EveClient as Loadable<common::Status>>::load(&esc).await?;
     println!("{}", status);
     Ok(())
 }
 
-async fn search(esc: &EveSwaggerClient, names: Vec<String>) -> anyhow::Result<()> {
-    let result = <EveSwaggerClient as Searchable<common::SearchResult>>::load(&esc, names).await?;
+async fn search(esc: &EveClient, names: Vec<String>) -> anyhow::Result<()> {
+    let result = <EveClient as Searchable<common::SearchResult>>::load(&esc, names).await?;
 
     let print = |maybe_objects: Option<Vec<common::Object>>, title| {
         if let Some(objects) = maybe_objects {
@@ -132,13 +130,71 @@ async fn search(esc: &EveSwaggerClient, names: Vec<String>) -> anyhow::Result<()
     Ok(())
 }
 
-async fn report<T>(esc: &EveSwaggerClient, ids: Vec<u32>) -> anyhow::Result<()>
+async fn display<T: 'static>(esc: & EveClient, args: Vec<String>) -> anyhow::Result<()>
 where
-    EveSwaggerClient: LoadableById<T>,
-    <EveSwaggerClient as LoadableById<T>>::Output: Display,
+    EveClient: LoadableById<T>,
+    <EveClient as LoadableById<T>>::Output: Display,
+{
+    let mut ids = Vec::new();
+    let mut names = Vec::new();
+    for arg in args {
+        if let Ok(id) = arg.parse::<u32>() {
+            ids.push(id)
+        } else {
+            names.push(arg);
+        }
+    }
+
+    let type_id =  TypeId::of::<T>();
+    let _b =TypeId::of::<universe::System>();
+
+    if !ids.is_empty() {
+        report::<T>(esc, ids).await?;
+    }
+    if !names.is_empty() {
+        let sr = <EveClient as Searchable<common::SearchResult>>::load(&esc, names).await?;
+
+        if type_id == TypeId::of::<universe::Constellation>() {
+            try_report(esc, &sr.constellations).await.unwrap_or_default();
+        } else if type_id == TypeId::of::<universe::System>() {
+            try_report(esc, &sr.systems).await.unwrap_or_default();
+        } else if type_id == TypeId::of::<universe::Type>() {
+            try_report(esc, &sr.inventory_types).await.unwrap_or_default();
+        } else if type_id == TypeId::of::<universe::Region>() {
+            try_report(esc, &sr.regions).await.unwrap_or_default();
+        } else if type_id == TypeId::of::<universe::Station>() {
+            try_report(esc, &sr.stations).await.unwrap_or_default();
+        }
+        // try_report(esc, &sr.agents).await.unwrap_or_default();
+        // try_report(esc, &sr.alliances).await.unwrap_or_default();
+        // try_report(esc, &sr.characters).await.unwrap_or_default();
+        // try_report(esc, &sr.corporations).await.unwrap_or_default();
+        // try_report(esc, &sr.factions).await.unwrap_or_default();
+    }
+
+    Ok(())
+}
+
+async fn try_report<T>(esc: &EveClient, args: &Option<Vec<common::Object>>) -> anyhow::Result<()>
+where
+    EveClient: LoadableById<T>,
+    <EveClient as LoadableById<T>>::Output: Display,
+{
+    if let Some(objects) = args {
+        let ids = objects.into_iter().map(|obj| obj.id).collect::<Vec<_>>();
+        report::<T>(esc, ids).await?;
+    }
+
+    Ok(())
+}
+
+async fn report<T>(esc: &EveClient, ids: Vec<u32>) -> anyhow::Result<()>
+where
+    EveClient: LoadableById<T>,
+    <EveClient as LoadableById<T>>::Output: Display,
 {
     for id in ids {
-        let obj = <EveSwaggerClient as LoadableById<T>>::load(&esc, id).await?;
+        let obj = <EveClient as LoadableById<T>>::load(&esc, id).await?;
         println!("{}", obj);
     }
     Ok(())
