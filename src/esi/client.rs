@@ -11,6 +11,7 @@ use crate::esi::Searchable;
 use crate::{common, universe};
 
 pub const STATUS: &'static str = "https://esi.evetech.net/latest/status";
+pub const MARKETS: &'static str = "https://esi.evetech.net/latest/markets";
 pub const UNIVERSE: &'static str = "https://esi.evetech.net/latest/universe";
 pub const PARAM: &'static str = "datasource=tranquility&language=en";
 

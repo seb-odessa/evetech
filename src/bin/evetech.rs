@@ -6,16 +6,19 @@ use evetech::esi::EveSwaggerClient as EveClient;
 use evetech::esi::Loadable;
 use evetech::esi::LoadableById;
 use evetech::esi::Searchable;
+use evetech::market;
 use evetech::universe;
 
-use std::fmt::Display;
 use std::any::TypeId;
+use std::fmt::Display;
 
 const USAGE: &'static str = "
 Evetech CLI Client
 
 Usage:
+    evetech <command>
     evetech <command> <args>...
+    evetech <command> [--market] <args>...
     evetech (-h | --help)
     evetech --version
 
@@ -36,6 +39,7 @@ Commands
     evetech category <ids>...
 
 Options:
+  --market      Specify request for Market.
   -h --help     Show this screen.
   --version     Show version.
 ";
@@ -43,6 +47,7 @@ Options:
 #[derive(Debug, Deserialize)]
 struct Args {
     arg_command: Command,
+    flag_market: bool,
     arg_args: Vec<String>,
 }
 
@@ -71,7 +76,7 @@ async fn main() -> anyhow::Result<()> {
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
 
-    println!("{:?}", args);
+    println!("{:?}\n", args);
 
     let esc: EveClient = EveClient::new();
     match args.arg_command {
@@ -90,7 +95,13 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::Region => display::<universe::Region>(&esc, args.arg_args.clone()).await?,
         Command::Type => display::<universe::Type>(&esc, args.arg_args.clone()).await?,
-        Command::Group => display::<universe::Group>(&esc, args.arg_args.clone()).await?,
+        Command::Group => {
+            if args.flag_market {
+                display::<market::Group>(&esc, args.arg_args.clone()).await?
+            } else {
+                display::<universe::Group>(&esc, args.arg_args.clone()).await?
+            }
+        }
         Command::Category => display::<universe::Category>(&esc, args.arg_args.clone()).await?,
     }
 
@@ -129,7 +140,7 @@ async fn search(esc: &EveClient, names: Vec<String>) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn display<T: 'static>(esc: & EveClient, args: Vec<String>) -> anyhow::Result<()>
+async fn display<T: 'static>(esc: &EveClient, args: Vec<String>) -> anyhow::Result<()>
 where
     EveClient: LoadableById<T>,
     <EveClient as LoadableById<T>>::Output: Display,
@@ -144,8 +155,8 @@ where
         }
     }
 
-    let type_id =  TypeId::of::<T>();
-    let _b =TypeId::of::<universe::System>();
+    let type_id = TypeId::of::<T>();
+    let _b = TypeId::of::<universe::System>();
 
     if !ids.is_empty() {
         report::<T>(esc, ids).await?;
@@ -154,11 +165,15 @@ where
         let sr = <EveClient as Searchable<common::SearchResult>>::load(&esc, names).await?;
 
         if type_id == TypeId::of::<universe::Constellation>() {
-            try_report(esc, &sr.constellations).await.unwrap_or_default();
+            try_report(esc, &sr.constellations)
+                .await
+                .unwrap_or_default();
         } else if type_id == TypeId::of::<universe::System>() {
             try_report(esc, &sr.systems).await.unwrap_or_default();
         } else if type_id == TypeId::of::<universe::Type>() {
-            try_report(esc, &sr.inventory_types).await.unwrap_or_default();
+            try_report(esc, &sr.inventory_types)
+                .await
+                .unwrap_or_default();
         } else if type_id == TypeId::of::<universe::Region>() {
             try_report(esc, &sr.regions).await.unwrap_or_default();
         } else if type_id == TypeId::of::<universe::Station>() {
