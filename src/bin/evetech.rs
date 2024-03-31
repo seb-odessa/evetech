@@ -50,7 +50,6 @@ struct Args {
 enum Command {
     Status,
     Search,
-    // ids
     System,
     Star,
     Planet,
