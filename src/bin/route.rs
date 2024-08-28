@@ -110,7 +110,7 @@ async fn build_route(system: &String, mode: &Mode) -> anyhow::Result<()> {
 
 async fn best_route(esc: &Client, id: u32, start: &WayPoint, _: &Mode) -> anyhow::Result<()> {
     let system = <Client as ById<universe::System>>::load(&esc, id).await?;
-    for celestials in &system.planets {
+    if let Some(celestials) = system.planets {
         for celestial in celestials {
             if let Some(ref belts) = celestial.asteroid_belts {
                 let mut route = Route::new(start.clone());
