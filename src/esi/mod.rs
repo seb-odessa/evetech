@@ -40,3 +40,8 @@ pub trait LoadableById<T> {
     type Output;
     fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send;
 }
+
+pub trait LoadableByIdAndHash<T> {
+    type Output;
+    fn load<S: Into<String>>(&self, id: u32, hash: S) -> impl Future<Output = anyhow::Result<Self::Output>> + Send;
+}

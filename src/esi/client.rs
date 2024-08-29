@@ -7,11 +7,13 @@ use std::future::Future;
 use crate::esi::ApiClient;
 use crate::esi::Loadable;
 use crate::esi::LoadableById;
+use crate::esi::LoadableByIdAndHash;
 use crate::esi::Searchable;
-use crate::{common, universe};
+use crate::{common, killmails, market, universe};
 
 pub const STATUS: &'static str = "https://esi.evetech.net/latest/status";
 pub const MARKETS: &'static str = "https://esi.evetech.net/latest/markets";
+pub const KILLMAILS: &'static str = "https://esi.evetech.net/latest/killmails";
 pub const UNIVERSE: &'static str = "https://esi.evetech.net/latest/universe";
 pub const PARAM: &'static str = "datasource=tranquility&language=en";
 
@@ -193,6 +195,25 @@ impl LoadableById<universe::Category> for EveSwaggerClient {
     }
 }
 
+impl LoadableById<market::Group> for EveSwaggerClient {
+    type Output = market::Group;
+    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+        self.get::<Self::Output>(format!("{MARKETS}/groups/{id}/?{PARAM}"))
+    }
+}
+
+impl LoadableByIdAndHash<killmails::Killmail> for EveSwaggerClient {
+    type Output = killmails::Killmail;
+    fn load<S: Into<String>>(
+        &self,
+        id: u32,
+        hash: S,
+    ) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+        let hash = hash.into();
+        self.get::<Self::Output>(format!("{KILLMAILS}/{id}/{hash}/?{PARAM}"))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -361,6 +382,21 @@ mod tests {
         let obj = <EveSwaggerClient as LoadableById<Object>>::load(&esc, 3).await?;
         assert_eq!(obj.category_id, 3);
         assert_eq!(obj.name, "Station");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn killmail() -> anyhow::Result<()> {
+        type Object = crate::killmails::Killmail;
+        let esc = EveSwaggerClient::new();
+        let obj = <EveSwaggerClient as LoadableByIdAndHash<Object>>::load(
+            &esc,
+            120480909,
+            "9c01e82d5a65818c816a72e6bcc24dd045dde2f8",
+        )
+        .await?;
+        assert_eq!(obj.killmail_id, 120480909);
+        assert_eq!(obj.solar_system_id, 30004348);
         Ok(())
     }
 }
