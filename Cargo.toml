@@ -13,9 +13,11 @@ edition = "2021"
     serde_derive = { version = "1.0" }
     tokio = { version = "1", features = ["full"] }
     docopt = "1.1"
-    septem = "1.1.0"
+    septem = "1.1"
     itertools ="0.12"
+    diesel = { version = "2.2.0", features = ["sqlite", "chrono"] }
+    dotenvy = "0.15"
 
 [dev-dependencies]
     approx = "0.5"
-    env_logger = { version = "0.11", default-features = false }
+    diesel_migrations = "2.0"

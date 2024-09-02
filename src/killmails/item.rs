@@ -1,4 +1,3 @@
-use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Item {
@@ -7,19 +6,6 @@ pub struct Item {
     pub quantity_destroyed: Option<u64>,
     pub quantity_dropped: Option<u64>,
     pub singleton: u32,
-}
-impl fmt::Display for Item {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "flag: {}", self.flag)?;
-        writeln!(f, "item_type_id: {}", self.item_type_id)?;
-        if let Some(quantity_destroyed) = self.quantity_destroyed {
-            writeln!(f, "quantity_destroyed: {}", quantity_destroyed)?;
-        }
-        if let Some(quantity_dropped) = self.quantity_dropped {
-            writeln!(f, "quantity_dropped: {}", quantity_dropped)?;
-        }
-        writeln!(f, "singleton: {}", self.singleton)
-    }
 }
 
 #[cfg(test)]

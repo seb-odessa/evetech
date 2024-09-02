@@ -6,4 +6,6 @@ pub mod common;
 pub mod esi;
 pub mod killmails;
 pub mod market;
+pub mod models;
+pub mod schema;
 pub mod universe;

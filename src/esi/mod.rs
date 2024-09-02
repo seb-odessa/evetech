@@ -5,6 +5,9 @@ use std::future::Future;
 
 pub mod client;
 pub use client::EveSwaggerClient;
+pub mod api;
+pub use api::EveApi;
+
 
 pub trait ApiClient {
     // Process prepared request

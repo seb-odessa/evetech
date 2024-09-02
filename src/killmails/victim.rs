@@ -1,6 +1,4 @@
 use crate::common::Position;
-use std::fmt;
-
 use super::item::Item;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
@@ -13,34 +11,6 @@ pub struct Victim {
     pub position: Option<Position>,
     pub ship_type_id: u32,
     pub items: Option<Vec<Item>>,
-}
-
-impl fmt::Display for Victim {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let Some(character_id) = self.character_id {
-            writeln!(f, "character_id: {}", character_id)?;
-        }
-        if let Some(corporation_id) = self.corporation_id {
-            writeln!(f, "corporation_id: {}", corporation_id)?;
-        }
-        if let Some(alliance_id) = self.alliance_id {
-            writeln!(f, "alliance_id: {}", alliance_id)?;
-        }
-        if let Some(faction_id) = self.faction_id {
-            writeln!(f, "faction_id: {}", faction_id)?;
-        }
-        writeln!(f, "damage_taken: {}", self.damage_taken)?;
-        if let Some(position) = &self.position {
-            writeln!(f, "position: {}", position)?;
-        }
-        writeln!(f, "ship_type_id: {}", self.ship_type_id)?;
-        if let Some(items) = &self.items {
-            for item in items {
-                writeln!(f, "item: {}", item)?;
-            }
-        }
-        write!(f, "")
-    }
 }
 
 #[cfg(test)]

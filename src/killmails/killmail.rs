@@ -1,6 +1,5 @@
-use std::fmt;
 
-use super::{attacker::Attaker, victim::Victim};
+use super::{attacker::Attacker, victim::Victim};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Killmail {
@@ -9,26 +8,8 @@ pub struct Killmail {
     pub solar_system_id: u32,
     pub moon_id: Option<u32>,
     pub war_id: Option<u32>,
-    pub attackers: Vec<Attaker>,
+    pub attackers: Vec<Attacker>,
     pub victim: Victim,
-}
-impl fmt::Display for Killmail {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "killmail_id: {}", self.killmail_id)?;
-        writeln!(f, "killmail_time: {}", self.killmail_time)?;
-        writeln!(f, "solar_system_id: {}", self.solar_system_id)?;
-        if let Some(moon_id) = self.moon_id {
-            writeln!(f, "moon_id: {}", moon_id)?;
-        }
-        if let Some(war_id) = self.war_id {
-            writeln!(f, "war_id: {}", war_id)?;
-        }
-        writeln!(f, "attakers: ")?;
-        for attacker in &self.attackers {
-            writeln!(f, "{}", attacker)?;
-        }
-        writeln!(f, "victim: {}", self.victim)
-    }
 }
 
 #[cfg(test)]
@@ -107,7 +88,7 @@ mod tests {
         assert_eq!(
             killmail.attackers,
             vec![
-                Attaker {
+                Attacker {
                     character_id: Some(3019582),
                     corporation_id: Some(1000274),
                     alliance_id: None,
@@ -118,7 +99,7 @@ mod tests {
                     ship_type_id: Some(34495),
                     weapon_type_id: Some(34580)
                 },
-                Attaker {
+                Attacker {
                     character_id: Some(3019581),
                     corporation_id: Some(1000274),
                     alliance_id: None,
@@ -129,7 +110,7 @@ mod tests {
                     ship_type_id: Some(34495),
                     weapon_type_id: Some(34580)
                 },
-                Attaker {
+                Attacker {
                     character_id: None,
                     corporation_id: None,
                     alliance_id: None,
