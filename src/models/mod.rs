@@ -33,7 +33,7 @@ mod tests {
     }
 
     #[test]
-    fn test_create_and_query_killmail() -> anyhow::Result<()> {
+    fn insert_select() -> anyhow::Result<()> {
         let mut conn = establish_connection(":memory:")?;
         run_migrations(&mut conn);
 
