@@ -1,5 +1,6 @@
 use std::{
-    collections::HashMap, sync::{Arc, Mutex}
+    collections::HashMap,
+    sync::{Arc, Mutex},
 };
 
 use crate::esi::client::KILLMAILS;
@@ -22,18 +23,12 @@ impl EveApi {
     }
 
     pub async fn load(&self, id: u32) -> anyhow::Result<universe::Station> {
-        // Проверяем, есть ли данные в кэше
         if let Some(station) = self.cache.lock().unwrap().get(&id) {
             return Ok(station.clone());
         }
 
-        // Если данных нет в кэше, загружаем их
-        let station = self
-            .client
-            .get::<universe::Station>(format!("{UNIVERSE}/stations/{id}/?{PARAM}"))
-            .await?;
-
-        // Сохраняем данные в кэш
+        let uri = format!("{UNIVERSE}/stations/{id}/?{PARAM}");
+        let station = self.client.get::<universe::Station>(uri).await?;
         self.cache.lock().unwrap().insert(id, station.clone());
 
         Ok(station)
@@ -45,10 +40,8 @@ impl EveApi {
         hash: S,
     ) -> anyhow::Result<killmail::Killmail> {
         let hash = hash.into();
-        let obj = self
-            .client
-            .get::<killmail::Killmail>(format!("{KILLMAILS}/{id}/{hash}/?{PARAM}"))
-            .await?;
+        let uri = format!("{KILLMAILS}/{id}/{hash}/?{PARAM}");
+        let obj = self.client.get::<killmail::Killmail>(uri).await?;
         Ok(obj)
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "evetech"
-version = "0.2.2"
+version = "0.2.5"
 edition = "2021"
 
 [dependencies]
@@ -17,6 +17,7 @@ edition = "2021"
     itertools ="0.12"
     diesel = { version = "2.2.0", features = ["sqlite", "chrono"] }
     dotenvy = "0.15"
+    chrono = "*"
 
 [dev-dependencies]
     approx = "0.5"

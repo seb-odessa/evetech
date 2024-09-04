@@ -41,3 +41,11 @@ CREATE TABLE victims(
         faction_id
     )
 ) WITHOUT ROWID;
+CREATE INDEX attacker_character ON attackers (character_id ASC);
+CREATE INDEX attacker_corporation ON attackers (corporation_id ASC);
+CREATE INDEX attacker_alliance ON attackers (alliance_id ASC);
+CREATE INDEX attacker_faction ON attackers (faction_id ASC);
+CREATE INDEX victim_character ON victims (character_id ASC);
+CREATE INDEX victim_corporation ON victims (corporation_id ASC);
+CREATE INDEX victim_alliance ON victims (alliance_id ASC);
+CREATE INDEX victim_faction ON victims (faction_id ASC);
