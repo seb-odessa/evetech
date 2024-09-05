@@ -1,9 +1,4 @@
-use diesel::sqlite::SqliteConnection;
-use diesel::Connection;
-use dotenvy::dotenv;
 use evetech::esi::EveApi;
-use evetech::models::Api;
-// use evetech::killmails::Killmail;
 use chrono::NaiveDate;
 use env_logger;
 use log::info;
@@ -13,23 +8,24 @@ use std::env;
 use std::thread;
 use std::time::Duration;
 
-pub fn establish_connection() -> anyhow::Result<SqliteConnection> {
-    dotenv().ok();
-    let url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let conn = SqliteConnection::establish(&url)?;
-    Ok(conn)
-}
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    let conn = establish_connection()?;
-    let mut db = Api::new(conn);
+    let host = env::var("ZKBINFO_HOST").unwrap_or(String::from("localhost"));
+    let port = env::var("ZKBINFO_PORT")
+        .unwrap_or_default()
+        .parse::<u16>()
+        .unwrap_or(8080);
+
 
     let args = env::args().collect::<Vec<String>>();
     if args.len() != 1 {
         let api = EveApi::new();
+        let client = reqwest::Client::new();
+        let zkbinfo_save_api = format!("http://{host}:{port}/killmail/save");
+        info!("zkbinfo API SAVE url: {zkbinfo_save_api}");
+
 
         if let Ok(date) = NaiveDate::parse_from_str(args[1].as_str(), "%Y-%m-%d") {
             let zkb_api = format!(
@@ -47,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
             for (id, hash) in map {
                 info!("{id} -> {hash}");
                 if let Ok(killmail) = api.load_killmail(id as u32, hash.clone()).await {
-                    db.save(&killmail)?;
+                    client.post(&zkbinfo_save_api).json(&killmail).send().await?;
                 } else {
                     println!();
                     for _ in 0..10 {
@@ -55,7 +51,7 @@ async fn main() -> anyhow::Result<()> {
                         thread::sleep(Duration::from_secs(1));
                     }
                     if let Ok(killmail) = api.load_killmail(id as u32, hash).await {
-                        db.save(&killmail)?;
+                        client.post(&zkbinfo_save_api).json(&killmail).send().await?;
                     }
                 }
             }
