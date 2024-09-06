@@ -10,6 +10,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use evetech::models::Api;
+use evetech::models::{ObjectType, SubjectType};
 
 type Context = web::Data<AppState>;
 
@@ -58,13 +59,20 @@ async fn main() -> anyhow::Result<()> {
     });
 
     info!("Launching server at {host}:{port}");
+    let allowed = "character|corporation|alliance|faction";
+    let friends_route = format!("/friendly/{{object:{allowed}}}/for/{{subject:{allowed}}}/{{id}}");
+    let enemies_route = format!("/enemy/{{object:{allowed}}}/for/{{subject:{allowed}}}/{{id}}");
+
     HttpServer::new(move || {
         App::new()
             .app_data(context.clone())
+            .service(
+                web::scope("/api")
+                    .route(&friends_route, web::get().to(friends))
+                    .route(&enemies_route, web::get().to(enemies)),
+            )
             /*
-                        .service(
-                            web::scope("/api")
-                                .route("/statistic", web::get().to(api::statistic))
+                            .route("/statistic", web::get().to(api::statistic))
                                 .route("/killmail/ids/{date}/", web::get().to(api::saved_ids))
                                 .route(
                                     "/character/{id}/lost/{ship}/",
@@ -190,8 +198,62 @@ async fn main() -> anyhow::Result<()> {
     .map_err(|e| anyhow!(e))
 }
 
-async fn ids_by_date(ctx: Context, path: web::Path<String>) -> impl Responder {
-    let date = path.into_inner();
+fn object<S: Into<String>>(arg: S) -> ObjectType {
+    match arg.into().as_str() {
+        "character" => ObjectType::Character,
+        "corporation" => ObjectType::Corporation,
+        "alliance" => ObjectType::Alliance,
+        "faction" => ObjectType::Faction,
+        _ => unreachable!(),
+    }
+}
+
+fn subject<S: Into<String>>(arg: S, id: u32) -> SubjectType {
+    match arg.into().as_str() {
+        "character" => SubjectType::Character(id),
+        "corporation" => SubjectType::Corporation(id),
+        "alliance" => SubjectType::Alliance(id),
+        "faction" => SubjectType::Faction(id),
+        _ => unreachable!(),
+    }
+}
+
+async fn friends(ctx: Context, args: web::Path<(String, String, u32)>) -> impl Responder {
+    let (obj, subj, id) = args.into_inner();
+
+    info!("object: {obj}");
+    info!("subject: {subj}");
+    info!("id: {id}");
+
+    let result = ctx
+        .api
+        .try_lock()
+        .map_err(|e| anyhow!("{e}"))
+        .and_then(|mut api| api.friends(subject(subj, id), object(obj)))
+        .map_err(|e| anyhow!("{e}"));
+
+    Result::from(result)
+}
+
+async fn enemies(ctx: Context, args: web::Path<(String, String, u32)>) -> impl Responder {
+    let (obj, subj, id) = args.into_inner();
+
+    info!("object: {obj}");
+    info!("subject: {subj}");
+    info!("id: {id}");
+
+    let result = ctx
+        .api
+        .try_lock()
+        .map_err(|e| anyhow!("{e}"))
+        .and_then(|mut api| api.enemies(subject(subj, id), object(obj)))
+        .map_err(|e| anyhow!("{e}"));
+
+    Result::from(result)
+}
+
+async fn ids_by_date(ctx: Context, args: web::Path<String>) -> impl Responder {
+    let date = args.into_inner();
 
     let result = ctx
         .api
@@ -233,6 +295,17 @@ impl From<anyhow::Error> for Result {
 }
 impl From<anyhow::Result<Vec<i32>>> for Result {
     fn from(result: anyhow::Result<Vec<i32>>) -> Self {
+        match result {
+            Ok(ids) => match serde_json::to_string(&ids) {
+                Ok(json) => Self::from(json),
+                Err(err) => Self::from(anyhow!("{err}")),
+            },
+            Err(err) => Self::from(err),
+        }
+    }
+}
+impl From<anyhow::Result<Vec<(i32, i64)>>> for Result {
+    fn from(result: anyhow::Result<Vec<(i32, i64)>>) -> Self {
         match result {
             Ok(ids) => match serde_json::to_string(&ids) {
                 Ok(json) => Self::from(json),

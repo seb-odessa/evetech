@@ -4,6 +4,7 @@ mod killmail;
 mod victim;
 
 pub use api::Api;
+pub use api::{ObjectType, SubjectType};
 
 fn as_option(x: i32) -> Option<u32> {
     if 0 == x {
@@ -17,8 +18,6 @@ fn as_option(x: i32) -> Option<u32> {
 mod tests {
     use super::*;
     use crate::killmails;
-    use api::RpType;
-    use api::RqType;
 
     use diesel::prelude::*;
     use diesel::sqlite::SqliteConnection;
@@ -86,62 +85,62 @@ mod tests {
     }
 
     #[test]
-    fn find_assistants() -> anyhow::Result<()> {
+    fn friends() -> anyhow::Result<()> {
         let mut conn = establish_connection(MEMORY)?;
         run_migrations(&mut conn);
         let mut api = Api::new(conn);
         generate_killmails(&mut api, 4)?;
 
-        let assist = api.find_assistants(RqType::Character(2), RpType::Character)?;
+        let assist = api.friends(SubjectType::Character(2), ObjectType::Character)?;
         assert_eq!(assist, vec![(5, 1), (4, 1), (3, 1)]);
 
-        let assist = api.find_assistants(RqType::Character(3), RpType::Character)?;
+        let assist = api.friends(SubjectType::Character(3), ObjectType::Character)?;
         assert_eq!(assist, vec![(5, 2), (4, 2), (2, 1)]);
 
-        let assist = api.find_assistants(RqType::Character(4), RpType::Character)?;
+        let assist = api.friends(SubjectType::Character(4), ObjectType::Character)?;
         assert_eq!(assist, vec![(5, 3), (3, 2), (2, 1)]);
 
-        let assist = api.find_assistants(RqType::Corporation(40), RpType::Corporation)?;
+        let assist = api.friends(SubjectType::Corporation(40), ObjectType::Corporation)?;
         assert_eq!(assist, vec![(50, 3), (30, 2), (20, 1)]);
 
-        let assist = api.find_assistants(RqType::Alliance(400), RpType::Alliance)?;
+        let assist = api.friends(SubjectType::Alliance(400), ObjectType::Alliance)?;
         assert_eq!(assist, vec![(500, 3), (300, 2), (200, 1)]);
 
-        let assist = api.find_assistants(RqType::Faction(4000), RpType::Faction)?;
+        let assist = api.friends(SubjectType::Faction(4000), ObjectType::Faction)?;
         assert_eq!(assist, vec![(5000, 3), (3000, 2), (2000, 1)]);
 
-        let assist = api.find_assistants(RqType::Corporation(20), RpType::Character)?;
+        let assist = api.friends(SubjectType::Corporation(20), ObjectType::Character)?;
         assert_eq!(assist, vec![(5, 1), (4, 1), (3, 1)]);
 
         Ok(())
     }
 
     #[test]
-    fn find_attackers() -> anyhow::Result<()> {
+    fn enemies() -> anyhow::Result<()> {
         let mut conn = establish_connection(MEMORY)?;
         run_migrations(&mut conn);
         let mut api = Api::new(conn);
         generate_killmails(&mut api, 4)?;
 
-        let assist = api.find_attackers(RqType::Character(1), RpType::Character)?;
+        let assist = api.enemies(SubjectType::Character(1), ObjectType::Character)?;
         assert_eq!(assist, vec![(5, 4), (4, 3), (3, 2), (2, 1)]);
 
-        let assist = api.find_attackers(RqType::Corporation(10), RpType::Corporation)?;
+        let assist = api.enemies(SubjectType::Corporation(10), ObjectType::Corporation)?;
         assert_eq!(assist, vec![(50, 4), (40, 3), (30, 2), (20, 1)]);
 
-        let assist = api.find_attackers(RqType::Alliance(100), RpType::Alliance)?;
+        let assist = api.enemies(SubjectType::Alliance(100), ObjectType::Alliance)?;
         assert_eq!(assist, vec![(500, 4), (400, 3), (300, 2), (200, 1)]);
 
-        let assist = api.find_attackers(RqType::Faction(1000), RpType::Faction)?;
+        let assist = api.enemies(SubjectType::Faction(1000), ObjectType::Faction)?;
         assert_eq!(assist, vec![(5000, 4), (4000, 3), (3000, 2), (2000, 1)]);
 
-        let assist = api.find_attackers(RqType::Character(1), RpType::Corporation)?;
+        let assist = api.enemies(SubjectType::Character(1), ObjectType::Corporation)?;
         assert_eq!(assist, vec![(50, 4), (40, 3), (30, 2), (20, 1)]);
 
-        let assist = api.find_attackers(RqType::Character(1), RpType::Alliance)?;
+        let assist = api.enemies(SubjectType::Character(1), ObjectType::Alliance)?;
         assert_eq!(assist, vec![(500, 4), (400, 3), (300, 2), (200, 1)]);
 
-        let assist = api.find_attackers(RqType::Corporation(10), RpType::Alliance)?;
+        let assist = api.enemies(SubjectType::Corporation(10), ObjectType::Alliance)?;
         assert_eq!(assist, vec![(500, 4), (400, 3), (300, 2), (200, 1)]);
 
         Ok(())

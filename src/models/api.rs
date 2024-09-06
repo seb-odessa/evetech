@@ -8,14 +8,14 @@ use diesel::dsl::count_star;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 
-pub enum RqType {
+pub enum SubjectType {
     Character(u32),
     Corporation(u32),
     Alliance(u32),
     Faction(u32),
 }
 
-pub enum RpType {
+pub enum ObjectType {
     Character,
     Corporation,
     Alliance,
@@ -122,7 +122,7 @@ impl Api {
             })
     }
 
-    pub fn find_assistants(&mut self, rq: RqType, rp: RpType) -> anyhow::Result<Vec<(i32, i64)>> {
+    pub fn friends(&mut self, rq: SubjectType, rp: ObjectType) -> anyhow::Result<Vec<(i32, i64)>> {
         use schema::attackers;
         use schema::attackers::dsl::*;
 
@@ -130,17 +130,17 @@ impl Api {
 
         let attacker_filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
             match rq {
-                RqType::Character(id) => Box::new(attacker.field(character_id).eq(id as i32)),
-                RqType::Corporation(id) => Box::new(attacker.field(corporation_id).eq(id as i32)),
-                RqType::Alliance(id) => Box::new(attacker.field(alliance_id).eq(id as i32)),
-                RqType::Faction(id) => Box::new(attacker.field(faction_id).eq(id as i32)),
+                SubjectType::Character(id) => Box::new(attacker.field(character_id).eq(id as i32)),
+                SubjectType::Corporation(id) => Box::new(attacker.field(corporation_id).eq(id as i32)),
+                SubjectType::Alliance(id) => Box::new(attacker.field(alliance_id).eq(id as i32)),
+                SubjectType::Faction(id) => Box::new(attacker.field(faction_id).eq(id as i32)),
             };
         let assist_filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
             match rq {
-                RqType::Character(id) => Box::new(assistant.field(character_id).ne(id as i32)),
-                RqType::Corporation(id) => Box::new(assistant.field(corporation_id).ne(id as i32)),
-                RqType::Alliance(id) => Box::new(assistant.field(alliance_id).ne(id as i32)),
-                RqType::Faction(id) => Box::new(assistant.field(faction_id).ne(id as i32)),
+                SubjectType::Character(id) => Box::new(assistant.field(character_id).ne(id as i32)),
+                SubjectType::Corporation(id) => Box::new(assistant.field(corporation_id).ne(id as i32)),
+                SubjectType::Alliance(id) => Box::new(assistant.field(alliance_id).ne(id as i32)),
+                SubjectType::Faction(id) => Box::new(assistant.field(faction_id).ne(id as i32)),
             };
         let count = count_star();
 
@@ -149,7 +149,7 @@ impl Api {
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 match rp {
-                    RpType::Character => attacker
+                    ObjectType::Character => attacker
                         .inner_join(
                             assistant
                                 .on(attacker.field(killmail_id).eq(assistant.field(killmail_id))),
@@ -161,7 +161,7 @@ impl Api {
                         .select((assistant.field(character_id), count))
                         .order(count.desc())
                         .load::<(i32, i64)>(&mut *conn),
-                    RpType::Corporation => attacker
+                    ObjectType::Corporation => attacker
                         .inner_join(
                             assistant
                                 .on(attacker.field(killmail_id).eq(assistant.field(killmail_id))),
@@ -173,7 +173,7 @@ impl Api {
                         .select((assistant.field(corporation_id), count))
                         .order(count.desc())
                         .load::<(i32, i64)>(&mut *conn),
-                    RpType::Alliance => attacker
+                    ObjectType::Alliance => attacker
                         .inner_join(
                             assistant
                                 .on(attacker.field(killmail_id).eq(assistant.field(killmail_id))),
@@ -185,7 +185,7 @@ impl Api {
                         .select((assistant.field(alliance_id), count))
                         .order(count.desc())
                         .load::<(i32, i64)>(&mut *conn),
-                    RpType::Faction => attacker
+                    ObjectType::Faction => attacker
                         .inner_join(
                             assistant
                                 .on(attacker.field(killmail_id).eq(assistant.field(killmail_id))),
@@ -202,17 +202,17 @@ impl Api {
             })
     }
 
-    pub fn find_attackers(&mut self, rq: RqType, rp: RpType) -> anyhow::Result<Vec<(i32, i64)>> {
+    pub fn enemies(&mut self, rq: SubjectType, rp: ObjectType) -> anyhow::Result<Vec<(i32, i64)>> {
         use schema::attackers;
         use schema::attackers::dsl::*;
         use schema::victims;
         use schema::victims::dsl::*;
 
         let victim: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> = match rq {
-            RqType::Character(id) => Box::new(victims::character_id.eq(id as i32)),
-            RqType::Corporation(id) => Box::new(victims::corporation_id.eq(id as i32)),
-            RqType::Alliance(id) => Box::new(victims::alliance_id.eq(id as i32)),
-            RqType::Faction(id) => Box::new(victims::faction_id.eq(id as i32)),
+            SubjectType::Character(id) => Box::new(victims::character_id.eq(id as i32)),
+            SubjectType::Corporation(id) => Box::new(victims::corporation_id.eq(id as i32)),
+            SubjectType::Alliance(id) => Box::new(victims::alliance_id.eq(id as i32)),
+            SubjectType::Faction(id) => Box::new(victims::faction_id.eq(id as i32)),
         };
 
         let count = count_star();
@@ -221,7 +221,7 @@ impl Api {
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 match rp {
-                    RpType::Character => attackers
+                    ObjectType::Character => attackers
                         .inner_join(victims.on(attackers::killmail_id.eq(victims::killmail_id)))
                         .filter(victim)
                         .filter(attackers::character_id.ne(0))
@@ -229,7 +229,7 @@ impl Api {
                         .select((attackers::character_id, count))
                         .order(count.desc())
                         .load::<(i32, i64)>(&mut *conn),
-                    RpType::Corporation => attackers
+                    ObjectType::Corporation => attackers
                         .inner_join(victims.on(attackers::killmail_id.eq(victims::killmail_id)))
                         .filter(victim)
                         .filter(attackers::character_id.ne(0))
@@ -237,7 +237,7 @@ impl Api {
                         .select((attackers::corporation_id, count))
                         .order(count.desc())
                         .load::<(i32, i64)>(&mut *conn),
-                    RpType::Alliance => attackers
+                    ObjectType::Alliance => attackers
                         .inner_join(victims.on(attackers::killmail_id.eq(victims::killmail_id)))
                         .filter(victim)
                         .filter(attackers::character_id.ne(0))
@@ -245,7 +245,7 @@ impl Api {
                         .select((attackers::alliance_id, count))
                         .order(count.desc())
                         .load::<(i32, i64)>(&mut *conn),
-                    RpType::Faction => attackers
+                    ObjectType::Faction => attackers
                         .inner_join(victims.on(attackers::killmail_id.eq(victims::killmail_id)))
                         .filter(victim)
                         .filter(attackers::character_id.ne(0))
