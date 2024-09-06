@@ -1,14 +1,13 @@
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use anyhow::anyhow;
-
 use diesel::{Connection, SqliteConnection};
 use env_logger;
-use log::{error, info};
-use serde::Serialize;
+use log::{debug, error, info};
 
 use std::env;
 use std::sync::Mutex;
+use std::time::Duration;
 
 use evetech::models::Api;
 
@@ -25,14 +24,9 @@ impl AppState {
     }
 }
 
-fn establish_connection<S: Into<String>>(uri: S) -> anyhow::Result<SqliteConnection> {
-    let conn = SqliteConnection::establish(uri.into().as_str())?;
-    Ok(conn)
-}
-
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     let uri = env::var("ZKBINFO_DB").unwrap_or(String::from("killmails.db"));
     info!("The ZKBINFO Database URI: {uri}");
@@ -46,30 +40,26 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or(8080);
     info!("The ZKBINFO port: {port}");
 
-    let conn = establish_connection(uri)?;
+    let conn = SqliteConnection::establish(&uri)?;
     let api = Api::new(conn);
     let context = web::Data::new(AppState::new(api));
-
-    // actix_rt::spawn(async move {
-    //     let mut interval = actix_rt::time::interval(Duration::from_secs(60 * 60 * 48));
-    //     loop {
-    //         interval.tick().await;
-    //         if let Ok(conn) = cleanup.get() {
-    //             if let Err(what) = database::cleanup(&conn) {
-    //                 error!("{what}");
-    //             } else {
-    //                 info!("Cleanup performed");
-    //             }
-    //         }
-    //     }
-    // });
+    let ctx = context.clone();
+    actix_rt::spawn(async move {
+        let mut interval = actix_rt::time::interval(Duration::from_secs(60 * 10));
+        loop {
+            interval.tick().await;
+            if let Ok(mut api) = ctx.api.try_lock() {
+                match api.cleanup(30) {
+                    Ok(count) => info!("Clean up performed. Deleted {count} killmails"),
+                    Err(err) => error!("Clean up failed: {err}"),
+                }
+            }
+        }
+    });
 
     info!("Launching server at {host}:{port}");
     HttpServer::new(move || {
         App::new()
-            // .wrap(
-            //     Cors::permissive(), //TODO Rwconfigure due to unsafe
-            // )
             .app_data(context.clone())
             /*
                         .service(
@@ -186,8 +176,11 @@ async fn main() -> anyhow::Result<()> {
                                 ),
                         )
             */
-            .service(web::scope("/debug").route("/hello",  web::get().to(hello)))
-            .service(web::scope("/killmail").route("/save", web::post().to(save)))
+            .service(
+                web::scope("/killmail")
+                    .route("/{date}", web::get().to(ids_by_date))
+                    .route("/save", web::post().to(save)),
+            )
             .wrap(Logger::default())
     })
     .workers(6)
@@ -197,11 +190,18 @@ async fn main() -> anyhow::Result<()> {
     .map_err(|e| anyhow!(e))
 }
 
-async fn hello() -> impl Responder {
-    info!("save");
-    HttpResponse::Ok().body("Hey there!")
-}
+async fn ids_by_date(ctx: Context, path: web::Path<String>) -> impl Responder {
+    let date = path.into_inner();
 
+    let result = ctx
+        .api
+        .try_lock()
+        .map_err(|e| anyhow!("{e}"))
+        .and_then(|mut api| api.ids_by_date(date))
+        .map_err(|e| anyhow!("{e}"));
+
+    Result::from(result)
+}
 
 async fn save(ctx: Context, json: String) -> impl Responder {
     let result = serde_json::from_str::<evetech::killmails::Killmail>(&json)
@@ -212,39 +212,49 @@ async fn save(ctx: Context, json: String) -> impl Responder {
                 .map_err(|e| anyhow!("{e}"))
                 .and_then(|mut api| api.save(&killmail))
         });
-
-    match result {
-        Ok(id) => {
-            info!("killmail {} saved to the DB", id);
-            Status::from(format!("Success"))
-        }
-        Err(what) => {
-            error!("Failed to save to DB: {what}");
-            Status::from(format!("{what}"))
-        }
-    }
+    Result::from(result)
 }
 
-#[derive(Serialize)]
-pub struct Status {
-    message: String,
+pub struct Result {
+    json: String,
 }
-impl Status {
-    pub fn from<T: Into<String>>(message: T) -> Self {
-        Self {
-            message: message.into(),
+impl From<String> for Result {
+    fn from(json: String) -> Self {
+        debug!("{json}");
+        Self { json }
+    }
+}
+impl From<anyhow::Error> for Result {
+    fn from(err: anyhow::Error) -> Self {
+        let json = format!(r#"{{ "error": "{err}" }}"#);
+        error!("{json}");
+        Self { json }
+    }
+}
+impl From<anyhow::Result<Vec<i32>>> for Result {
+    fn from(result: anyhow::Result<Vec<i32>>) -> Self {
+        match result {
+            Ok(ids) => match serde_json::to_string(&ids) {
+                Ok(json) => Self::from(json),
+                Err(err) => Self::from(anyhow!("{err}")),
+            },
+            Err(err) => Self::from(err),
         }
     }
-    pub fn json<T: Into<String>>(message: T) -> String {
-        format!(r#"{{ "message": "{}" }}"#, message.into())
+}
+impl From<anyhow::Result<i32>> for Result {
+    fn from(result: anyhow::Result<i32>) -> Self {
+        match result {
+            Ok(id) => Self::from(format!(r#"{{ "id": "{id}" }}"#)),
+            Err(err) => Self::from(err),
+        }
     }
 }
-impl Responder for Status {
+impl Responder for Result {
     type Body = actix_web::body::BoxBody;
     fn respond_to(self, _req: &HttpRequest) -> HttpResponse<Self::Body> {
-        let body = serde_json::to_string(&self).unwrap();
         HttpResponse::Ok()
             .content_type(actix_web::http::header::ContentType::json())
-            .body(body)
+            .body(self.json)
     }
 }

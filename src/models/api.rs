@@ -33,7 +33,7 @@ impl Api {
         }
     }
 
-    pub fn save(&mut self, killmail: &killmails::killmail::Killmail) -> anyhow::Result<u32> {
+    pub fn save(&mut self, killmail: &killmails::killmail::Killmail) -> anyhow::Result<i32> {
         self.conn
             .try_lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
@@ -51,7 +51,7 @@ impl Api {
                             .values(models::attacker::Attacker::from((id, attacker)))
                             .execute(conn)?;
                     }
-                    Ok(id)
+                    Ok(id as i32)
                 })
             })
     }
@@ -86,6 +86,39 @@ impl Api {
                     attackers,
                     victim,
                 })
+            })
+    }
+
+    pub fn cleanup(&mut self, days: u16) -> anyhow::Result<usize> {
+        use diesel::sql_types::Text;
+        use schema::killmails::dsl::*;
+
+        let pattern = format!("date('now', '-{days} day')");
+        self.conn
+            .try_lock()
+            .map_err(|e| anyhow::anyhow!("{e}"))
+            .and_then(|mut conn| {
+                diesel::delete(
+                    killmails.filter(killmail_time.lt(diesel::dsl::sql::<Text>(&pattern))),
+                )
+                .execute(&mut *conn)
+                .map_err(|e| anyhow::anyhow!("{e}"))
+            })
+    }
+
+    pub fn ids_by_date<S: Into<String>>(&mut self, date: S) -> anyhow::Result<Vec<i32>> {
+        use schema::killmails::dsl::*;
+
+        let pattern = format!("{}%", date.into());
+        self.conn
+            .try_lock()
+            .map_err(|e| anyhow::anyhow!("{e}"))
+            .and_then(|mut conn| {
+                killmails
+                    .filter(killmail_time.like(pattern))
+                    .select(killmail_id)
+                    .load::<i32>(&mut *conn)
+                    .map_err(|e| anyhow::anyhow!("{e}"))
             })
     }
 

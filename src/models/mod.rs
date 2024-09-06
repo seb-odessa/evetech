@@ -25,6 +25,7 @@ mod tests {
     use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
     const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
+    const MEMORY: &str = ":memory:";
 
     fn establish_connection<S: Into<String>>(uri: S) -> anyhow::Result<SqliteConnection> {
         let conn = SqliteConnection::establish(uri.into().as_str())?;
@@ -38,7 +39,7 @@ mod tests {
     fn create_killmail(id: u32) -> killmails::killmail::Killmail {
         killmails::killmail::Killmail {
             killmail_id: id,
-            killmail_time: "".to_owned(),
+            killmail_time: format!("2024-08-{:02}T00:00:00Z", id),
             solar_system_id: 1,
             moon_id: None,
             war_id: None,
@@ -86,7 +87,7 @@ mod tests {
 
     #[test]
     fn find_assistants() -> anyhow::Result<()> {
-        let mut conn = establish_connection(":memory:")?;
+        let mut conn = establish_connection(MEMORY)?;
         run_migrations(&mut conn);
         let mut api = Api::new(conn);
         generate_killmails(&mut api, 4)?;
@@ -117,7 +118,7 @@ mod tests {
 
     #[test]
     fn find_attackers() -> anyhow::Result<()> {
-        let mut conn = establish_connection(":memory:")?;
+        let mut conn = establish_connection(MEMORY)?;
         run_migrations(&mut conn);
         let mut api = Api::new(conn);
         generate_killmails(&mut api, 4)?;
@@ -148,7 +149,7 @@ mod tests {
 
     #[test]
     fn load() -> anyhow::Result<()> {
-        let mut conn = establish_connection(":memory:")?;
+        let mut conn = establish_connection(MEMORY)?;
         run_migrations(&mut conn);
 
         let killmail = killmails::killmail::Killmail {
@@ -225,4 +226,22 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn ids_by_date() -> anyhow::Result<()> {
+        let mut conn = establish_connection(MEMORY)?;
+        run_migrations(&mut conn);
+        let mut api = Api::new(conn);
+        generate_killmails(&mut api, 5)?;
+
+        assert!(api.ids_by_date("2024-08-01")?.is_empty());
+        assert_eq!(1, api.ids_by_date("2024-08-02")?.len());
+        assert_eq!(1, api.ids_by_date("2024-08-03")?.len());
+        assert_eq!(1, api.ids_by_date("2024-08-04")?.len());
+        assert_eq!(1, api.ids_by_date("2024-08-05")?.len());
+        assert_eq!(1, api.ids_by_date("2024-08-06")?.len());
+
+        Ok(())
+    }
+
 }
