@@ -2,3 +2,5 @@
 Cargo.lock
 Cargo.lock
 *.db
+*.bak
+
