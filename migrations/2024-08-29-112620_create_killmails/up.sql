@@ -49,3 +49,4 @@ CREATE INDEX victim_character ON victims (character_id ASC);
 CREATE INDEX victim_corporation ON victims (corporation_id ASC);
 CREATE INDEX victim_alliance ON victims (alliance_id ASC);
 CREATE INDEX victim_faction ON victims (faction_id ASC);
+CREATE INDEX killmail_time ON killmails(killmail_time);
