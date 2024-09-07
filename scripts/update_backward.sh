@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CURRENT=${1:-$(date +'%Y-%m-%d' -d "1 day ago")}
-FINISH=${2:-$(date +'%Y-%m-%d' -d "30 day ago")}
+FINISH=${2:-$(date +'%Y-%m-%d' -d "60 day ago")}
 if [ "$CURRENT" != "$TODAY" ]; then
     while [ "$CURRENT" != "$FINISH" ]; do
       echo $CURRENT

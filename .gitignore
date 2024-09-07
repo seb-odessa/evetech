@@ -1,4 +1,5 @@
 /target
+/deploy
 Cargo.lock
 Cargo.lock
 *.db

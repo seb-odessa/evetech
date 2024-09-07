@@ -29,10 +29,10 @@ impl AppState {
 async fn main() -> anyhow::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    let uri = env("ZKBINFO_DB", String::from("killmails.db"));
+    let uri = env::var("ZKBINFO_DB").unwrap_or(String::from("killmails.db"));
     info!("The ZKBINFO Database URI: {uri}");
 
-    let host = env("ZKBINFO_HOST", String::from("localhost"));
+    let host = env::var("ZKBINFO_HOST").unwrap_or(String::from("localhost"));
     info!("The ZKBINFO host: {host}");
 
     let port = env::<u16>("ZKBINFO_PORT", 8080);
