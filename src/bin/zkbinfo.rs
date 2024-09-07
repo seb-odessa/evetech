@@ -29,28 +29,31 @@ impl AppState {
 async fn main() -> anyhow::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    let uri = env::var("ZKBINFO_DB").unwrap_or(String::from("killmails.db"));
+    let uri = env("ZKBINFO_DB", String::from("killmails.db"));
     info!("The ZKBINFO Database URI: {uri}");
 
-    let host = env::var("ZKBINFO_HOST").unwrap_or(String::from("localhost"));
+    let host = env("ZKBINFO_HOST", String::from("localhost"));
     info!("The ZKBINFO host: {host}");
 
-    let port = env::var("ZKBINFO_PORT")
-        .unwrap_or_default()
-        .parse::<u16>()
-        .unwrap_or(8080);
+    let port = env::<u16>("ZKBINFO_PORT", 8080);
     info!("The ZKBINFO port: {port}");
+
+    let keep_days: u16 = env::<u16>("ZKBINFO_DAYS", 60);
+    info!("The ZKBINFO keep days: {keep_days}");
+
+    let cleanup_period: u64 = env::<u64>("ZKBINFO_PERIOD", 4);
+    info!("The ZKBINFO clean up period: {cleanup_period} hours");
 
     let conn = SqliteConnection::establish(&uri)?;
     let api = Api::new(conn);
     let context = web::Data::new(AppState::new(api));
     let ctx = context.clone();
     actix_rt::spawn(async move {
-        let mut interval = actix_rt::time::interval(Duration::from_secs(60 * 10));
+        let mut interval = actix_rt::time::interval(Duration::from_secs(60 * 60 * cleanup_period));
         loop {
             interval.tick().await;
             if let Ok(mut api) = ctx.api.try_lock() {
-                match api.cleanup(30) {
+                match api.cleanup(keep_days) {
                     Ok(count) => info!("Clean up performed. Deleted {count} killmails"),
                     Err(err) => error!("Clean up failed: {err}"),
                 }
@@ -330,4 +333,11 @@ impl Responder for Result {
             .content_type(actix_web::http::header::ContentType::json())
             .body(self.json)
     }
+}
+
+fn env<T: std::str::FromStr>(key: &str, default: T) -> T {
+    env::var(key)
+        .unwrap_or_default()
+        .parse::<T>()
+        .unwrap_or(default)
 }

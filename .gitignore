@@ -3,4 +3,5 @@ Cargo.lock
 Cargo.lock
 *.db
 *.bak
+*.tar.gz
 

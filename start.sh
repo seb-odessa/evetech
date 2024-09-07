@@ -9,6 +9,9 @@ echo Service ip: $IP
 
 export ZKBINFO_HOST=$IP
 export ZKBINFO_PORT=8080
+export ZKBINFO_DAYS=60
+export ZKBINFO_PERIOD=4
+
 export ZKBGUI_HOST=$IP
 export ZKBGUI_PORT=8088
 
