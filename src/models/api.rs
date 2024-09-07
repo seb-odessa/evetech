@@ -1,12 +1,17 @@
+use std::collections::HashMap;
 use std::sync::Mutex;
 
 use crate::killmails;
 use crate::models;
 use crate::schema;
 
+use chrono::NaiveDateTime;
+use chrono::Timelike;
 use diesel::dsl::count_star;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
+
+const DATETIME: &str = "%Y-%m-%dT%H:%M:%SZ";
 
 pub enum SubjectType {
     Character(u32),
@@ -25,7 +30,6 @@ pub enum ObjectType {
 pub struct Api {
     conn: Mutex<SqliteConnection>,
 }
-
 impl Api {
     pub fn new(conn: SqliteConnection) -> Self {
         Self {
@@ -256,5 +260,41 @@ impl Api {
                 }
                 .map_err(|e| anyhow::anyhow!("{e}"))
             })
+    }
+
+    pub fn activity(&mut self, rq: SubjectType) -> anyhow::Result<HashMap<u32, i32>> {
+        use schema::attackers;
+        use schema::killmails;
+
+        let attacker_filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
+            match rq {
+                SubjectType::Character(id) => Box::new(attackers::character_id.eq(id as i32)),
+                SubjectType::Corporation(id) => Box::new(attackers::corporation_id.eq(id as i32)),
+                SubjectType::Alliance(id) => Box::new(attackers::alliance_id.eq(id as i32)),
+                SubjectType::Faction(id) => Box::new(attackers::faction_id.eq(id as i32)),
+            };
+
+        let dates = self
+            .conn
+            .try_lock()
+            .map_err(|e| anyhow::anyhow!("{e}"))
+            .and_then(|mut conn| {
+                killmails::table
+                    .inner_join(
+                        attackers::table.on(killmails::killmail_id.eq(attackers::killmail_id)),
+                    )
+                    .filter(attacker_filter)
+                    .select(killmails::killmail_time)
+                    .load::<String>(&mut *conn)
+                    .map_err(|e| anyhow::anyhow!("{e}"))
+            })?;
+
+        let mut hours = HashMap::new();
+        for date in dates {
+            let datetime = NaiveDateTime::parse_from_str(&date, DATETIME)?;
+            *hours.entry(datetime.hour()).or_insert(0) += 1;
+        }
+
+        Ok(hours)
     }
 }
