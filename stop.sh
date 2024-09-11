@@ -1,6 +1,6 @@
 #!/bin/bash
 
-killall websocket_client
+killall zkb_client
 killall zkbinfo
 killall zkbgui
 

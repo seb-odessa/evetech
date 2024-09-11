@@ -7,7 +7,7 @@ echo logs archived: $ARCH
 IP=$(hostname -I | awk '{print $1}')
 echo Service ip: $IP
 
-export ZKBINFO_HOST=$IP
+export ZKBINFO_HOST="$IP"
 export ZKBINFO_PORT=8080
 export ZKBINFO_DAYS=60
 export ZKBINFO_PERIOD=4
@@ -27,8 +27,8 @@ head ~/zkbinfo/logs/zkbinfo.log
 #sleep 1
 #head ~/zkbinfo/logs/zkbgui.log
 
-nohup ~/zkbinfo/bin/websocket_client > ~/zkbinfo/logs/websocket_client.log&
-echo websocket_client started...
+nohup ~/zkbinfo/bin/zkb_client > ~/zkbinfo/logs/zkb_client.log&
+echo zkb_client started...
 sleep 1
-head ~/zkbinfo/logs/websocket_client.log
+head ~/zkbinfo/logs/zkb_client.log
 
