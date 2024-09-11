@@ -4,16 +4,16 @@ use crate::universe::utils;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct System {
-    pub system_id: u32,
+    pub system_id: i32,
     pub name: String,
-    pub constellation_id: u32,
+    pub constellation_id: i32,
     pub position: Position,
     pub security_status: f32,
     pub security_class: Option<String>,
-    pub star_id: Option<u32>,
+    pub star_id: Option<i32>,
     pub planets: Option<Vec<CelestialBodies>>,
-    pub stargates: Option<Vec<u32>>,
-    pub stations: Option<Vec<u32>>,
+    pub stargates: Option<Vec<i32>>,
+    pub stations: Option<Vec<i32>>,
 }
 impl fmt::Display for System {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -39,9 +39,9 @@ impl fmt::Display for System {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Eq)]
 pub struct CelestialBodies {
-    pub planet_id: u32,
-    pub asteroid_belts: Option<Vec<u32>>,
-    pub moons: Option<Vec<u32>>,
+    pub planet_id: i32,
+    pub asteroid_belts: Option<Vec<i32>>,
+    pub moons: Option<Vec<i32>>,
 }
 impl fmt::Display for CelestialBodies {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

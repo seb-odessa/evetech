@@ -3,11 +3,11 @@ use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Group {
-    pub market_group_id: u32,
+    pub market_group_id: i32,
     pub name: String,
-    pub parent_group_id: Option<u32>,
+    pub parent_group_id: Option<i32>,
     pub description: String,
-    pub types: Vec<u32>,
+    pub types: Vec<i32>,
 }
 impl fmt::Display for Group {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

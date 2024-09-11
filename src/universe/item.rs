@@ -3,14 +3,14 @@ use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Type {
-    pub type_id: u32,
+    pub type_id: i32,
     pub name: String,
-    pub group_id: u32,
+    pub group_id: i32,
     pub published: bool,
 
-    pub graphic_id: Option<u32>,
-    pub icon_id: Option<u32>,
-    pub market_group_id: Option<u32>,
+    pub graphic_id: Option<i32>,
+    pub icon_id: Option<i32>,
+    pub market_group_id: Option<i32>,
 
     pub mass: Option<f32>,
     pub radius: Option<f32>,
@@ -18,7 +18,7 @@ pub struct Type {
 
     pub volume: Option<f32>,
     pub packaged_volume: Option<f32>,
-    pub portion_size: Option<u32>,
+    pub portion_size: Option<i32>,
 
     pub description: String,
 
@@ -68,7 +68,7 @@ impl fmt::Display for Type {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct DogmaAttributes {
-    pub attribute_id: u32,
+    pub attribute_id: i32,
     pub value: f32,
 }
 impl fmt::Display for DogmaAttributes {
@@ -79,7 +79,7 @@ impl fmt::Display for DogmaAttributes {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct DogmaEffects {
-    pub effect_id: u32,
+    pub effect_id: i32,
     pub is_default: bool,
 }
 impl fmt::Display for DogmaEffects {

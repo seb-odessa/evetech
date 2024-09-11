@@ -16,9 +16,9 @@ pub struct Killmail {
 impl From<&killmails::Killmail> for Killmail {
     fn from(killmail: &killmails::Killmail) -> Self {
         Killmail {
-            killmail_id: killmail.killmail_id as i32,
+            killmail_id: killmail.killmail_id,
             killmail_time: killmail.killmail_time.clone(),
-            solar_system_id: killmail.solar_system_id as i32,
+            solar_system_id: killmail.solar_system_id,
             moon_id: killmail.moon_id.map(|x| x.try_into().ok()).flatten(),
             war_id: killmail.war_id.map(|x| x.try_into().ok()).flatten(),
         }

@@ -4,11 +4,11 @@ use crate::universe::utils;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Constellation {
-    pub constellation_id: u32,
+    pub constellation_id: i32,
     pub name: String,
     pub position: Position,
-    pub region_id: u32,
-    pub systems: Vec<u32>,
+    pub region_id: i32,
+    pub systems: Vec<i32>,
 }
 impl fmt::Display for Constellation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

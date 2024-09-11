@@ -8,7 +8,7 @@ use std::fmt;
 
 pub struct Route {
     pub start: WayPoint,
-    pub belts: HashMap<u32, WayPoint>,
+    pub belts: HashMap<i32, WayPoint>,
 }
 impl Route {
     pub fn new(start: WayPoint) -> Self {
@@ -22,7 +22,7 @@ impl Route {
         self.belts.insert(point.id, point);
     }
 
-    pub fn brute_force(&self) -> (f64, Vec<u32>) {
+    pub fn brute_force(&self) -> (f64, Vec<i32>) {
         if self.belts.is_empty() {
             return (0.0, vec![self.start.id]);
         }
@@ -53,7 +53,7 @@ impl Route {
         (minimal, route)
     }
 
-    fn length(&self, route: &Vec<&u32>) -> f64 {
+    fn length(&self, route: &Vec<&i32>) -> f64 {
         let mut distance = 0.0;
         let mut previous = &self.start.position;
         let mut ids = route.iter();

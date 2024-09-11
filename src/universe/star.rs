@@ -5,10 +5,10 @@ pub struct Star {
     pub name: String,
     pub age: u64,
     pub spectral_class: String,
-    pub temperature: u32,
+    pub temperature: i32,
     pub radius: i64,
-    pub solar_system_id: u32,
-    pub type_id: u32,
+    pub solar_system_id: i32,
+    pub type_id: i32,
 }
 impl fmt::Display for Star {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

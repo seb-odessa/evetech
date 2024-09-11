@@ -97,7 +97,7 @@ async fn build_route(system: &String, mode: &Mode) -> anyhow::Result<()> {
                 .map_err(|e| println!("{:?}", e))
                 .expect("Can't parse input value");
 
-            if selected as u32 <= starts.len() as u32 {
+            if selected <= starts.len() as i32 {
                 let id = system.system_id;
                 let index = (selected - 1) as usize;
                 let start = &starts[index];
@@ -108,7 +108,7 @@ async fn build_route(system: &String, mode: &Mode) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn best_route(esc: &Client, id: u32, start: &WayPoint, _: &Mode) -> anyhow::Result<()> {
+async fn best_route(esc: &Client, id: i32, start: &WayPoint, _: &Mode) -> anyhow::Result<()> {
     let system = <Client as ById<universe::System>>::load(&esc, id).await?;
     if let Some(celestials) = system.planets {
         for celestial in celestials {

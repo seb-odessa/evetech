@@ -148,7 +148,7 @@ where
     let mut ids = Vec::new();
     let mut names = Vec::new();
     for arg in args {
-        if let Ok(id) = arg.parse::<u32>() {
+        if let Ok(id) = arg.parse::<i32>() {
             ids.push(id)
         } else {
             names.push(arg);
@@ -202,7 +202,7 @@ where
     Ok(())
 }
 
-async fn report<T>(esc: &EveClient, ids: Vec<u32>) -> anyhow::Result<()>
+async fn report<T>(esc: &EveClient, ids: Vec<i32>) -> anyhow::Result<()>
 where
     EveClient: LoadableById<T>,
     <EveClient as LoadableById<T>>::Output: Display,

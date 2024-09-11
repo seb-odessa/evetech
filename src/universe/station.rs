@@ -4,18 +4,18 @@ use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Station {
-    pub station_id: u32,
+    pub station_id: i32,
     pub name: String,
     pub position: Position,
     pub max_dockable_ship_volume: f32,
     pub office_rental_cost: f32,
-    pub owner: Option<u32>,
-    pub race_id: Option<u32>,
+    pub owner: Option<i32>,
+    pub race_id: Option<i32>,
     pub reprocessing_efficiency: Option<f32>,
     pub reprocessing_station_take: Option<f32>,
     pub services: Option<Vec<String>>,
-    pub system_id: u32,
-    pub type_id: u32,
+    pub system_id: i32,
+    pub type_id: i32,
 }
 impl fmt::Display for Station {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

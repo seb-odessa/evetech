@@ -19,19 +19,19 @@ pub struct Attacker {
     pub ship_type_id: i32,
     pub weapon_type_id: i32,
 }
-impl From<(u32, &killmails::Attacker)> for Attacker {
-    fn from((id, attacker): (u32, &killmails::Attacker)) -> Self {
+impl From<(i32, &killmails::Attacker)> for Attacker {
+    fn from((id, attacker): (i32, &killmails::Attacker)) -> Self {
         Attacker {
-            killmail_id: id as i32,
-            character_id: attacker.character_id.unwrap_or_default() as i32,
-            corporation_id: attacker.corporation_id.unwrap_or_default() as i32,
-            alliance_id: attacker.alliance_id.unwrap_or_default() as i32,
-            faction_id: attacker.faction_id.unwrap_or_default() as i32,
-            damage_done: attacker.damage_done as i32,
+            killmail_id: id,
+            character_id: attacker.character_id.unwrap_or_default(),
+            corporation_id: attacker.corporation_id.unwrap_or_default(),
+            alliance_id: attacker.alliance_id.unwrap_or_default(),
+            faction_id: attacker.faction_id.unwrap_or_default(),
+            damage_done: attacker.damage_done,
             final_blow: attacker.final_blow,
             security_status: attacker.security_status,
-            ship_type_id: attacker.ship_type_id.unwrap_or_default() as i32,
-            weapon_type_id: attacker.weapon_type_id.unwrap_or_default() as i32,
+            ship_type_id: attacker.ship_type_id.unwrap_or_default(),
+            weapon_type_id: attacker.weapon_type_id.unwrap_or_default(),
         }
     }
 }
@@ -42,7 +42,7 @@ impl Into<killmails::Attacker> for Attacker {
             corporation_id: as_option(self.corporation_id),
             alliance_id: as_option(self.alliance_id),
             faction_id: as_option(self.faction_id),
-            damage_done: self.damage_done as u32,
+            damage_done: self.damage_done,
             final_blow: self.final_blow,
             security_status: self.security_status,
             ship_type_id: as_option(self.ship_type_id),

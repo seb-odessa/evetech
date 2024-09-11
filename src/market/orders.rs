@@ -5,15 +5,15 @@ pub type Orders = Vec<Order>;
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Order {
     pub order_id: u64,
-    pub system_id: u32,
-    pub location_id: u32,
+    pub system_id: i32,
+    pub location_id: i32,
     pub is_buy_order: bool,
-    pub type_id: u32,
-    pub min_volume: u32,
-    pub volume_remain: u32,
-    pub volume_total: u32,
+    pub type_id: i32,
+    pub min_volume: i32,
+    pub volume_remain: i32,
+    pub volume_total: i32,
     pub price: f32,
-    pub duration: u32,
+    pub duration: i32,
     pub issued: String,
     pub range: String,
 }

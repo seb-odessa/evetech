@@ -1,11 +1,11 @@
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Item {
-    pub flag: u32,
-    pub item_type_id: u32,
+    pub flag: i32,
+    pub item_type_id: i32,
     pub quantity_destroyed: Option<u64>,
     pub quantity_dropped: Option<u64>,
-    pub singleton: u32,
+    pub singleton: i32,
 }
 
 #[cfg(test)]

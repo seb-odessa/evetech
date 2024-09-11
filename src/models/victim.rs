@@ -16,16 +16,16 @@ pub struct Victim {
     pub damage_taken: i32,
     pub ship_type_id: i32,
 }
-impl From<(u32, &killmails::Victim)> for Victim {
-    fn from((id, victim): (u32, &killmails::Victim)) -> Self {
+impl From<(i32, &killmails::Victim)> for Victim {
+    fn from((id, victim): (i32, &killmails::Victim)) -> Self {
         Victim {
-            killmail_id: id as i32,
-            character_id: victim.character_id.unwrap_or_default() as i32,
-            corporation_id: victim.corporation_id.unwrap_or_default() as i32,
-            alliance_id: victim.alliance_id.unwrap_or_default() as i32,
-            faction_id: victim.faction_id.unwrap_or_default() as i32,
-            damage_taken: victim.damage_taken as i32,
-            ship_type_id: victim.ship_type_id as i32,
+            killmail_id: id,
+            character_id: victim.character_id.unwrap_or_default(),
+            corporation_id: victim.corporation_id.unwrap_or_default(),
+            alliance_id: victim.alliance_id.unwrap_or_default(),
+            faction_id: victim.faction_id.unwrap_or_default(),
+            damage_taken: victim.damage_taken,
+            ship_type_id: victim.ship_type_id,
         }
     }
 }
@@ -37,8 +37,8 @@ impl Into<killmails::Victim> for Victim {
             corporation_id: as_option(self.corporation_id),
             alliance_id: as_option(self.alliance_id),
             faction_id: as_option(self.faction_id),
-            damage_taken: self.damage_taken as u32,
-            ship_type_id: self.ship_type_id as u32,
+            damage_taken: self.damage_taken,
+            ship_type_id: self.ship_type_id,
             position: None,
             items: None
         }

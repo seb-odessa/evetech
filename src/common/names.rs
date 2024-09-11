@@ -2,7 +2,7 @@ use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Names {
-    pub id: u32,
+    pub id: i32,
     pub name: String,
     pub category: Categories,
 }

@@ -6,11 +6,11 @@ mod victim;
 pub use api::Api;
 pub use api::{ObjectType, SubjectType};
 
-fn as_option(x: i32) -> Option<u32> {
+fn as_option(x: i32) -> Option<i32> {
     if 0 == x {
         None
     } else {
-        Some(x as u32)
+        Some(x)
     }
 }
 
@@ -35,7 +35,7 @@ mod tests {
         conn.run_pending_migrations(MIGRATIONS).unwrap();
     }
 
-    fn create_killmail(id: u32) -> killmails::killmail::Killmail {
+    fn create_killmail(id: i32) -> killmails::killmail::Killmail {
         killmails::killmail::Killmail {
             killmail_id: id,
             killmail_time: format!("2024-08-{:02}T00:00:00Z", id),
@@ -56,7 +56,7 @@ mod tests {
         }
     }
 
-    fn create_attacker(id: u32) -> killmails::attacker::Attacker {
+    fn create_attacker(id: i32) -> killmails::attacker::Attacker {
         killmails::attacker::Attacker {
             character_id: Some(id),
             corporation_id: Some(10 * id),
@@ -70,8 +70,8 @@ mod tests {
         }
     }
 
-    fn generate_killmails(api: &mut Api, count: u32) -> anyhow::Result<()> {
-        const OFFSET: u32 = 2;
+    fn generate_killmails(api: &mut Api, count: i32) -> anyhow::Result<()> {
+        const OFFSET: i32 = 2;
         for i in 0..count {
             let mut killmail = create_killmail(i + OFFSET);
             for id in i..count {

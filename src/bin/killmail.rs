@@ -55,7 +55,7 @@ async fn main() -> anyhow::Result<()> {
 
             for (id, hash) in map {
                 info!("{id} -> {hash}");
-                if let Ok(killmail) = api.load_killmail(id as u32, hash.clone()).await {
+                if let Ok(killmail) = api.load_killmail(id, hash.clone()).await {
                     client
                         .post(&zkbinfo_save_api)
                         .json(&killmail)
@@ -67,7 +67,7 @@ async fn main() -> anyhow::Result<()> {
                         print!(".");
                         thread::sleep(Duration::from_secs(1));
                     }
-                    if let Ok(killmail) = api.load_killmail(id as u32, hash).await {
+                    if let Ok(killmail) = api.load_killmail(id, hash).await {
                         client
                             .post(&zkbinfo_save_api)
                             .json(&killmail)

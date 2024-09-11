@@ -3,13 +3,13 @@ use super::item::Item;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Victim {
-    pub character_id: Option<u32>,
-    pub corporation_id: Option<u32>,
-    pub alliance_id: Option<u32>,
-    pub faction_id: Option<u32>,
-    pub damage_taken: u32,
+    pub character_id: Option<i32>,
+    pub corporation_id: Option<i32>,
+    pub alliance_id: Option<i32>,
+    pub faction_id: Option<i32>,
+    pub damage_taken: i32,
     pub position: Option<Position>,
-    pub ship_type_id: u32,
+    pub ship_type_id: i32,
     pub items: Option<Vec<Item>>,
 }
 

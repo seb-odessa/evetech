@@ -3,12 +3,12 @@ use crate::common::Position;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct WayPoint {
-    pub id: u32,
+    pub id: i32,
     pub name: String,
     pub position: Position,
 }
 impl WayPoint {
-    pub fn new(id: u32, name: &String, position: &Position) -> Self {
+    pub fn new(id: i32, name: &String, position: &Position) -> Self {
         Self {
             id: id,
             name: name.clone(),

@@ -18,8 +18,8 @@ pub struct Place {
     id: i32,
     name: String,
     position: Position,
-    cloud_number: u32,
-    belt_number: u32,
+    cloud_number: i32,
+    belt_number: i32,
 }
 impl Place {
     pub fn new(id: &i32, name: &String, position: &Position) -> Self {
@@ -30,8 +30,8 @@ impl Place {
             id: id.clone(),
             name: name.clone(),
             position: position.clone(),
-            cloud_number: *tokens[1].parse::<Roman>().unwrap(),
-            belt_number: tokens[5].parse::<u32>().unwrap_or_default(),
+            cloud_number: *tokens[1].parse::<Roman>().unwrap() as i32,
+            belt_number: tokens[5].parse::<i32>().unwrap_or_default(),
         }
     }
 }

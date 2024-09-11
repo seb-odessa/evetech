@@ -113,91 +113,91 @@ impl Loadable<common::Status> for EveSwaggerClient {
 
 impl LoadableById<universe::System> for EveSwaggerClient {
     type Output = universe::System;
-    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{UNIVERSE}/systems/{id}/?{PARAM}"))
     }
 }
 
 impl LoadableById<universe::Constellation> for EveSwaggerClient {
     type Output = universe::Constellation;
-    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{UNIVERSE}/constellations/{id}/?{PARAM}"))
     }
 }
 
 impl LoadableById<universe::Region> for EveSwaggerClient {
     type Output = universe::Region;
-    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{UNIVERSE}/regions/{id}/?{PARAM}"))
     }
 }
 
 impl LoadableById<universe::Star> for EveSwaggerClient {
     type Output = universe::Star;
-    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{UNIVERSE}/stars/{id}/?{PARAM}"))
     }
 }
 
 impl LoadableById<universe::Planet> for EveSwaggerClient {
     type Output = universe::Planet;
-    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{UNIVERSE}/planets/{id}/?{PARAM}"))
     }
 }
 
 impl LoadableById<universe::AsteroidBelt> for EveSwaggerClient {
     type Output = universe::AsteroidBelt;
-    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{UNIVERSE}/asteroid_belts/{id}/?{PARAM}"))
     }
 }
 
 impl LoadableById<universe::Moon> for EveSwaggerClient {
     type Output = universe::Moon;
-    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{UNIVERSE}/moons/{id}/?{PARAM}"))
     }
 }
 
 impl LoadableById<universe::Stargate> for EveSwaggerClient {
     type Output = universe::Stargate;
-    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{UNIVERSE}/stargates/{id}/?{PARAM}"))
     }
 }
 
 impl LoadableById<universe::Station> for EveSwaggerClient {
     type Output = universe::Station;
-    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{UNIVERSE}/stations/{id}/?{PARAM}"))
     }
 }
 
 impl LoadableById<universe::Type> for EveSwaggerClient {
     type Output = universe::Type;
-    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{UNIVERSE}/types/{id}/?{PARAM}"))
     }
 }
 
 impl LoadableById<universe::Group> for EveSwaggerClient {
     type Output = universe::Group;
-    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{UNIVERSE}/groups/{id}/?{PARAM}"))
     }
 }
 
 impl LoadableById<universe::Category> for EveSwaggerClient {
     type Output = universe::Category;
-    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{UNIVERSE}/categories/{id}/?{PARAM}"))
     }
 }
 
 impl LoadableById<market::Group> for EveSwaggerClient {
     type Output = market::Group;
-    fn load(&self, id: u32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
+    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         self.get::<Self::Output>(format!("{MARKETS}/groups/{id}/?{PARAM}"))
     }
 }
@@ -206,7 +206,7 @@ impl LoadableByIdAndHash<killmails::Killmail> for EveSwaggerClient {
     type Output = killmails::Killmail;
     fn load<S: Into<String>>(
         &self,
-        id: u32,
+        id: i32,
         hash: S,
     ) -> impl Future<Output = anyhow::Result<Self::Output>> + Send {
         let hash = hash.into();

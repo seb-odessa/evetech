@@ -3,11 +3,11 @@ use super::{attacker::Attacker, victim::Victim};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Killmail {
-    pub killmail_id: u32,
+    pub killmail_id: i32,
     pub killmail_time: String,
-    pub solar_system_id: u32,
-    pub moon_id: Option<u32>,
-    pub war_id: Option<u32>,
+    pub solar_system_id: i32,
+    pub moon_id: Option<i32>,
+    pub war_id: Option<i32>,
     pub attackers: Vec<Attacker>,
     pub victim: Victim,
 }

@@ -211,7 +211,7 @@ fn object<S: Into<String>>(arg: S) -> ObjectType {
     }
 }
 
-fn subject<S: Into<String>>(arg: S, id: u32) -> SubjectType {
+fn subject<S: Into<String>>(arg: S, id: i32) -> SubjectType {
     match arg.into().as_str() {
         "character" => SubjectType::Character(id),
         "corporation" => SubjectType::Corporation(id),
@@ -221,7 +221,7 @@ fn subject<S: Into<String>>(arg: S, id: u32) -> SubjectType {
     }
 }
 
-async fn friends(ctx: Context, args: web::Path<(String, String, u32)>) -> impl Responder {
+async fn friends(ctx: Context, args: web::Path<(String, String, i32)>) -> impl Responder {
     let (obj, subj, id) = args.into_inner();
 
     info!("object: {obj}");
@@ -238,7 +238,7 @@ async fn friends(ctx: Context, args: web::Path<(String, String, u32)>) -> impl R
     Result::from(result)
 }
 
-async fn enemies(ctx: Context, args: web::Path<(String, String, u32)>) -> impl Responder {
+async fn enemies(ctx: Context, args: web::Path<(String, String, i32)>) -> impl Responder {
     let (obj, subj, id) = args.into_inner();
 
     info!("object: {obj}");

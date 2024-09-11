@@ -2,11 +2,11 @@ use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Object {
-    pub id: u32,
+    pub id: i32,
     pub name: String,
 }
 impl Object {
-    pub fn new<T: Into<String>>(id: u32, name: T) -> Self {
+    pub fn new<T: Into<String>>(id: i32, name: T) -> Self {
         Self {
             id: id,
             name: name.into(),

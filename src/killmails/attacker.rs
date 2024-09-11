@@ -1,15 +1,15 @@
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Attacker {
-    pub character_id: Option<u32>,
-    pub corporation_id: Option<u32>,
-    pub alliance_id: Option<u32>,
-    pub faction_id: Option<u32>,
-    pub damage_done: u32,
+    pub character_id: Option<i32>,
+    pub corporation_id: Option<i32>,
+    pub alliance_id: Option<i32>,
+    pub faction_id: Option<i32>,
+    pub damage_done: i32,
     pub final_blow: bool,
     pub security_status: f32,
-    pub ship_type_id: Option<u32>,
-    pub weapon_type_id: Option<u32>,
+    pub ship_type_id: Option<i32>,
+    pub weapon_type_id: Option<i32>,
 }
 
 #[cfg(test)]

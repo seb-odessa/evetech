@@ -11,7 +11,7 @@ use crate::{killmails::killmail, universe};
 use super::{ApiClient, EveSwaggerClient};
 pub struct EveApi {
     client: EveSwaggerClient,
-    cache: Arc<Mutex<HashMap<u32, universe::Station>>>,
+    cache: Arc<Mutex<HashMap<i32, universe::Station>>>,
 }
 
 impl EveApi {
@@ -22,7 +22,7 @@ impl EveApi {
         }
     }
 
-    pub async fn load(&self, id: u32) -> anyhow::Result<universe::Station> {
+    pub async fn load(&self, id: i32) -> anyhow::Result<universe::Station> {
         if let Some(station) = self.cache.lock().unwrap().get(&id) {
             return Ok(station.clone());
         }
@@ -36,7 +36,7 @@ impl EveApi {
 
     pub async fn load_killmail<S: Into<String>>(
         &self,
-        id: u32,
+        id: i32,
         hash: S,
     ) -> anyhow::Result<killmail::Killmail> {
         let hash = hash.into();

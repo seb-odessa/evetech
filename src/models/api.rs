@@ -14,10 +14,10 @@ use diesel::sqlite::SqliteConnection;
 const DATETIME: &str = "%Y-%m-%dT%H:%M:%SZ";
 
 pub enum SubjectType {
-    Character(u32),
-    Corporation(u32),
-    Alliance(u32),
-    Faction(u32),
+    Character(i32),
+    Corporation(i32),
+    Alliance(i32),
+    Faction(i32),
 }
 
 pub enum ObjectType {
@@ -55,36 +55,36 @@ impl Api {
                             .values(models::attacker::Attacker::from((id, attacker)))
                             .execute(conn)?;
                     }
-                    Ok(id as i32)
+                    Ok(id)
                 })
             })
     }
 
-    pub fn load(&mut self, id: u32) -> anyhow::Result<killmails::killmail::Killmail> {
+    pub fn load(&mut self, id: i32) -> anyhow::Result<killmails::killmail::Killmail> {
         self.conn
             .try_lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 let killmail = schema::killmails::table
-                    .filter(schema::killmails::killmail_id.eq(id as i32))
+                    .filter(schema::killmails::killmail_id.eq(id))
                     .first::<models::killmail::Killmail>(&mut *conn)?;
 
                 let attackers = schema::attackers::table
-                    .filter(schema::attackers::killmail_id.eq(id as i32))
+                    .filter(schema::attackers::killmail_id.eq(id))
                     .load::<models::attacker::Attacker>(&mut *conn)?
                     .into_iter()
                     .map(|attacker| attacker.into())
                     .collect();
 
                 let victim = schema::victims::table
-                    .filter(schema::victims::killmail_id.eq(id as i32))
+                    .filter(schema::victims::killmail_id.eq(id))
                     .first::<models::victim::Victim>(&mut *conn)?
                     .into();
 
                 Ok(killmails::killmail::Killmail {
-                    killmail_id: id as u32,
+                    killmail_id: id,
                     killmail_time: killmail.killmail_time,
-                    solar_system_id: killmail.solar_system_id as u32,
+                    solar_system_id: killmail.solar_system_id,
                     moon_id: killmail.moon_id.map(|x| x.try_into().ok()).flatten(),
                     war_id: killmail.war_id.map(|x| x.try_into().ok()).flatten(),
                     attackers,
@@ -134,17 +134,17 @@ impl Api {
 
         let attacker_filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
             match rq {
-                SubjectType::Character(id) => Box::new(attacker.field(character_id).eq(id as i32)),
-                SubjectType::Corporation(id) => Box::new(attacker.field(corporation_id).eq(id as i32)),
-                SubjectType::Alliance(id) => Box::new(attacker.field(alliance_id).eq(id as i32)),
-                SubjectType::Faction(id) => Box::new(attacker.field(faction_id).eq(id as i32)),
+                SubjectType::Character(id) => Box::new(attacker.field(character_id).eq(id)),
+                SubjectType::Corporation(id) => Box::new(attacker.field(corporation_id).eq(id)),
+                SubjectType::Alliance(id) => Box::new(attacker.field(alliance_id).eq(id)),
+                SubjectType::Faction(id) => Box::new(attacker.field(faction_id).eq(id)),
             };
         let assist_filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
             match rq {
-                SubjectType::Character(id) => Box::new(assistant.field(character_id).ne(id as i32)),
-                SubjectType::Corporation(id) => Box::new(assistant.field(corporation_id).ne(id as i32)),
-                SubjectType::Alliance(id) => Box::new(assistant.field(alliance_id).ne(id as i32)),
-                SubjectType::Faction(id) => Box::new(assistant.field(faction_id).ne(id as i32)),
+                SubjectType::Character(id) => Box::new(assistant.field(character_id).ne(id)),
+                SubjectType::Corporation(id) => Box::new(assistant.field(corporation_id).ne(id)),
+                SubjectType::Alliance(id) => Box::new(assistant.field(alliance_id).ne(id)),
+                SubjectType::Faction(id) => Box::new(assistant.field(faction_id).ne(id)),
             };
         let count = count_star();
 
@@ -213,10 +213,10 @@ impl Api {
         use schema::victims::dsl::*;
 
         let victim: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> = match rq {
-            SubjectType::Character(id) => Box::new(victims::character_id.eq(id as i32)),
-            SubjectType::Corporation(id) => Box::new(victims::corporation_id.eq(id as i32)),
-            SubjectType::Alliance(id) => Box::new(victims::alliance_id.eq(id as i32)),
-            SubjectType::Faction(id) => Box::new(victims::faction_id.eq(id as i32)),
+            SubjectType::Character(id) => Box::new(victims::character_id.eq(id)),
+            SubjectType::Corporation(id) => Box::new(victims::corporation_id.eq(id)),
+            SubjectType::Alliance(id) => Box::new(victims::alliance_id.eq(id)),
+            SubjectType::Faction(id) => Box::new(victims::faction_id.eq(id)),
         };
 
         let count = count_star();
@@ -268,10 +268,10 @@ impl Api {
 
         let attacker_filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
             match rq {
-                SubjectType::Character(id) => Box::new(attackers::character_id.eq(id as i32)),
-                SubjectType::Corporation(id) => Box::new(attackers::corporation_id.eq(id as i32)),
-                SubjectType::Alliance(id) => Box::new(attackers::alliance_id.eq(id as i32)),
-                SubjectType::Faction(id) => Box::new(attackers::faction_id.eq(id as i32)),
+                SubjectType::Character(id) => Box::new(attackers::character_id.eq(id)),
+                SubjectType::Corporation(id) => Box::new(attackers::corporation_id.eq(id)),
+                SubjectType::Alliance(id) => Box::new(attackers::alliance_id.eq(id)),
+                SubjectType::Faction(id) => Box::new(attackers::faction_id.eq(id)),
             };
 
         let dates = self

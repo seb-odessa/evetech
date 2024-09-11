@@ -3,10 +3,10 @@ use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Category {
-    pub category_id: u32,
+    pub category_id: i32,
     pub name: String,
     pub published: bool,
-    pub groups: Vec<u32>,
+    pub groups: Vec<i32>,
 }
 impl fmt::Display for Category {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

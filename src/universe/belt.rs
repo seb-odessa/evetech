@@ -5,7 +5,7 @@ use crate::common::Position;
 pub struct AsteroidBelt {
     pub name: String,
     pub position: Position,
-    pub system_id: u32,
+    pub system_id: i32,
 }
 impl fmt::Display for AsteroidBelt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

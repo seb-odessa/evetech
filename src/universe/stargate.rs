@@ -3,12 +3,12 @@ use crate::common::Position;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Stargate {
-    pub stargate_id: u32,
+    pub stargate_id: i32,
     pub name: String,
     pub position: Position,
     pub destination: StargateDestination,
-    pub system_id: u32,
-    pub type_id: u32,
+    pub system_id: i32,
+    pub type_id: i32,
 }
 impl fmt::Display for Stargate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -22,8 +22,8 @@ impl fmt::Display for Stargate {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct StargateDestination {
-    pub stargate_id: u32,
-    pub system_id: u32,
+    pub stargate_id: i32,
+    pub system_id: i32,
 }
 impl fmt::Display for StargateDestination {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
