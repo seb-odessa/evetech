@@ -3,6 +3,8 @@ extern crate serde_derive;
 
 pub mod alliance;
 pub mod apps;
+pub mod character;
+pub mod corporation;
 pub mod common;
 pub mod esi;
 pub mod killmails;
