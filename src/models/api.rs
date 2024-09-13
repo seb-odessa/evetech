@@ -110,6 +110,32 @@ impl Api {
             })
     }
 
+    pub fn remove_dangling_attackers(&mut self) -> anyhow::Result<usize> {
+        use diesel::sql_query;
+
+        self.conn
+            .try_lock()
+            .map_err(|e| anyhow::anyhow!("{e}"))
+            .and_then(|mut conn| {
+                sql_query("DELETE FROM attackers WHERE killmail_id NOT IN (SELECT killmail_id FROM killmails)")
+                .execute(&mut *conn)
+                .map_err(|e| anyhow::anyhow!("{e}"))
+            })
+    }
+
+    pub fn remove_dangling_victims(&mut self) -> anyhow::Result<usize> {
+        use diesel::sql_query;
+
+        self.conn
+            .try_lock()
+            .map_err(|e| anyhow::anyhow!("{e}"))
+            .and_then(|mut conn| {
+                sql_query("DELETE FROM victims WHERE killmail_id NOT IN (SELECT killmail_id FROM killmails)")
+                .execute(&mut *conn)
+                .map_err(|e| anyhow::anyhow!("{e}"))
+            })
+    }
+
     pub fn ids_by_date<S: Into<String>>(&mut self, date: S) -> anyhow::Result<Vec<i32>> {
         use schema::killmails::dsl::*;
 
@@ -259,6 +285,54 @@ impl Api {
                         .load::<(i32, i64)>(&mut *conn),
                 }
                 .map_err(|e| anyhow::anyhow!("{e}"))
+            })
+    }
+
+    pub fn wins(&mut self, rq: SubjectType) -> anyhow::Result<(i64, Option<i64>)> {
+        use diesel::dsl::{count, sum};
+        use schema::attackers;
+
+        let victims_filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
+            match rq {
+                SubjectType::Character(id) => Box::new(attackers::character_id.eq(id)),
+                SubjectType::Corporation(id) => Box::new(attackers::corporation_id.eq(id)),
+                SubjectType::Alliance(id) => Box::new(attackers::alliance_id.eq(id)),
+                SubjectType::Faction(id) => Box::new(attackers::faction_id.eq(id)),
+            };
+
+        self.conn
+            .try_lock()
+            .map_err(|e| anyhow::anyhow!("{e}"))
+            .and_then(|mut conn| {
+                attackers::table
+                    .filter(victims_filter)
+                    .select((count(attackers::killmail_id), sum(attackers::damage_done)))
+                    .first::<(i64, Option<i64>)>(&mut *conn)
+                    .map_err(|e| anyhow::anyhow!("{e}"))
+            })
+    }
+
+    pub fn losses(&mut self, rq: SubjectType) -> anyhow::Result<(i64, Option<i64>)> {
+        use diesel::dsl::{count, sum};
+        use schema::victims;
+
+        let victims_filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
+            match rq {
+                SubjectType::Character(id) => Box::new(victims::character_id.eq(id)),
+                SubjectType::Corporation(id) => Box::new(victims::corporation_id.eq(id)),
+                SubjectType::Alliance(id) => Box::new(victims::alliance_id.eq(id)),
+                SubjectType::Faction(id) => Box::new(victims::faction_id.eq(id)),
+            };
+
+        self.conn
+            .try_lock()
+            .map_err(|e| anyhow::anyhow!("{e}"))
+            .and_then(|mut conn| {
+                victims::table
+                    .filter(victims_filter)
+                    .select((count(victims::killmail_id), sum(victims::damage_taken)))
+                    .first::<(i64, Option<i64>)>(&mut *conn)
+                    .map_err(|e| anyhow::anyhow!("{e}"))
             })
     }
 

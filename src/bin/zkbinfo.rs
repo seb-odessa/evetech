@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use anyhow::anyhow;
@@ -45,7 +46,9 @@ async fn main() -> anyhow::Result<()> {
     info!("The ZKBINFO clean up period: {cleanup_period} hours");
 
     let conn = SqliteConnection::establish(&uri)?;
-    let api = Api::new(conn);
+    let mut api = Api::new(conn);
+    cleanup(&mut api, keep_days);
+
     let context = web::Data::new(AppState::new(api));
     let ctx = context.clone();
     actix_rt::spawn(async move {
@@ -53,10 +56,7 @@ async fn main() -> anyhow::Result<()> {
         loop {
             interval.tick().await;
             if let Ok(mut api) = ctx.api.try_lock() {
-                match api.cleanup(keep_days) {
-                    Ok(count) => info!("Clean up performed. Deleted {count} killmails"),
-                    Err(err) => error!("Clean up failed: {err}"),
-                }
+                cleanup(&mut api, keep_days);
             }
         }
     });
@@ -65,14 +65,24 @@ async fn main() -> anyhow::Result<()> {
     let allowed = "character|corporation|alliance|faction";
     let friends_route = format!("/friendly/{{object:{allowed}}}/for/{{subject:{allowed}}}/{{id}}");
     let enemies_route = format!("/enemy/{{object:{allowed}}}/for/{{subject:{allowed}}}/{{id}}");
+    let wins_route = format!("/wins/{{subject:{allowed}}}/{{id}}");
+    let losses_route = format!("/losses/{{subject:{allowed}}}/{{id}}");
 
     HttpServer::new(move || {
         App::new()
             .app_data(context.clone())
+            .wrap(
+                Cors::default()
+                    .allow_any_origin()
+                    .allow_any_method()
+                    .allow_any_header(),
+            )
             .service(
                 web::scope("/api")
                     .route(&friends_route, web::get().to(friends))
-                    .route(&enemies_route, web::get().to(enemies)),
+                    .route(&enemies_route, web::get().to(enemies))
+                    .route(&wins_route, web::get().to(wins))
+                    .route(&losses_route, web::get().to(losses)),
             )
             /*
                             .route("/statistic", web::get().to(api::statistic))
@@ -221,13 +231,32 @@ fn subject<S: Into<String>>(arg: S, id: i32) -> SubjectType {
     }
 }
 
+async fn wins(ctx: Context, args: web::Path<(String, i32)>) -> impl Responder {
+    let (subj, id) = args.into_inner();
+    let result = ctx
+        .api
+        .try_lock()
+        .map_err(|e| anyhow!("{e}"))
+        .and_then(|mut api| api.wins(subject(subj, id)))
+        .map_err(|e| anyhow!("{e}"));
+
+    Result::from(result)
+}
+
+async fn losses(ctx: Context, args: web::Path<(String, i32)>) -> impl Responder {
+    let (subj, id) = args.into_inner();
+    let result = ctx
+        .api
+        .try_lock()
+        .map_err(|e| anyhow!("{e}"))
+        .and_then(|mut api| api.losses(subject(subj, id)))
+        .map_err(|e| anyhow!("{e}"));
+
+    Result::from(result)
+}
+
 async fn friends(ctx: Context, args: web::Path<(String, String, i32)>) -> impl Responder {
     let (obj, subj, id) = args.into_inner();
-
-    info!("object: {obj}");
-    info!("subject: {subj}");
-    info!("id: {id}");
-
     let result = ctx
         .api
         .try_lock()
@@ -240,11 +269,6 @@ async fn friends(ctx: Context, args: web::Path<(String, String, i32)>) -> impl R
 
 async fn enemies(ctx: Context, args: web::Path<(String, String, i32)>) -> impl Responder {
     let (obj, subj, id) = args.into_inner();
-
-    info!("object: {obj}");
-    info!("subject: {subj}");
-    info!("id: {id}");
-
     let result = ctx
         .api
         .try_lock()
@@ -318,6 +342,17 @@ impl From<anyhow::Result<Vec<(i32, i64)>>> for Result {
         }
     }
 }
+impl From<anyhow::Result<(i64, Option<i64>)>> for Result {
+    fn from(result: anyhow::Result<(i64, Option<i64>)>) -> Self {
+        match result {
+            Ok(ids) => match serde_json::to_string(&ids) {
+                Ok(json) => Self::from(json),
+                Err(err) => Self::from(anyhow!("{err}")),
+            },
+            Err(err) => Self::from(err),
+        }
+    }
+}
 impl From<anyhow::Result<i32>> for Result {
     fn from(result: anyhow::Result<i32>) -> Self {
         match result {
@@ -340,4 +375,19 @@ fn env<T: std::str::FromStr>(key: &str, default: T) -> T {
         .unwrap_or_default()
         .parse::<T>()
         .unwrap_or(default)
+}
+
+fn cleanup(api: &mut Api, keep_days: u16) {
+    match api.cleanup(keep_days) {
+        Ok(count) => info!("Clean up performed. Deleted {count} killmails"),
+        Err(err) => error!("Clean up failed: {err}"),
+    }
+    match api.remove_dangling_attackers() {
+        Ok(count) => info!("Clean up performed. Deleted {count} attackers"),
+        Err(err) => error!("Clean up failed: {err}"),
+    }
+    match api.remove_dangling_victims() {
+        Ok(count) => info!("Clean up performed. Deleted {count} victims"),
+        Err(err) => error!("Clean up failed: {err}"),
+    }
 }
