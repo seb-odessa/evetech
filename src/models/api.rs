@@ -292,7 +292,7 @@ impl Api {
         use diesel::dsl::{count, sum};
         use schema::attackers;
 
-        let victims_filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
+        let filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
             match rq {
                 SubjectType::Character(id) => Box::new(attackers::character_id.eq(id)),
                 SubjectType::Corporation(id) => Box::new(attackers::corporation_id.eq(id)),
@@ -305,9 +305,62 @@ impl Api {
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 attackers::table
-                    .filter(victims_filter)
+                    .filter(filter)
                     .select((count(attackers::killmail_id), sum(attackers::damage_done)))
                     .first::<(i64, Option<i64>)>(&mut *conn)
+                    .map_err(|e| anyhow::anyhow!("{e}"))
+            })
+    }
+
+    pub fn wins_ships(&mut self, rq: SubjectType) -> anyhow::Result<Vec<(i32, i64)>> {
+        use diesel::dsl::count;
+        use schema::attackers;
+
+        let filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
+            match rq {
+                SubjectType::Character(id) => Box::new(attackers::character_id.eq(id)),
+                SubjectType::Corporation(id) => Box::new(attackers::corporation_id.eq(id)),
+                SubjectType::Alliance(id) => Box::new(attackers::alliance_id.eq(id)),
+                SubjectType::Faction(id) => Box::new(attackers::faction_id.eq(id)),
+            };
+        
+        self.conn
+            .try_lock()
+            .map_err(|e| anyhow::anyhow!("{e}"))
+            .and_then(|mut conn| {
+                attackers::table
+                    .filter(filter)
+                    .group_by(attackers::ship_type_id)
+                    .select((attackers::ship_type_id, count(attackers::ship_type_id)))
+                    .load::<(i32, i64)>(&mut *conn)
+                    .map_err(|e| anyhow::anyhow!("{e}"))
+            })
+    }
+
+    pub fn wins_systems(&mut self, rq: SubjectType) -> anyhow::Result<Vec<(i32, i64)>> {
+        use diesel::dsl::count;
+        use schema::attackers;
+        use schema::killmails;
+        use schema::killmails::dsl::*;
+
+        let filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
+            match rq {
+                SubjectType::Character(id) => Box::new(attackers::character_id.eq(id)),
+                SubjectType::Corporation(id) => Box::new(attackers::corporation_id.eq(id)),
+                SubjectType::Alliance(id) => Box::new(attackers::alliance_id.eq(id)),
+                SubjectType::Faction(id) => Box::new(attackers::faction_id.eq(id)),
+            };
+        
+        self.conn
+            .try_lock()
+            .map_err(|e| anyhow::anyhow!("{e}"))
+            .and_then(|mut conn| {
+                attackers::table
+                    .filter(filter)
+                    .inner_join(killmails.on(killmails::killmail_id.eq(attackers::killmail_id)))
+                    .group_by(killmails::solar_system_id)
+                    .select((killmails::solar_system_id, count(killmails::solar_system_id)))
+                    .load::<(i32, i64)>(&mut *conn)
                     .map_err(|e| anyhow::anyhow!("{e}"))
             })
     }
@@ -316,7 +369,7 @@ impl Api {
         use diesel::dsl::{count, sum};
         use schema::victims;
 
-        let victims_filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
+        let filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
             match rq {
                 SubjectType::Character(id) => Box::new(victims::character_id.eq(id)),
                 SubjectType::Corporation(id) => Box::new(victims::corporation_id.eq(id)),
@@ -329,9 +382,62 @@ impl Api {
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 victims::table
-                    .filter(victims_filter)
+                    .filter(filter)
                     .select((count(victims::killmail_id), sum(victims::damage_taken)))
                     .first::<(i64, Option<i64>)>(&mut *conn)
+                    .map_err(|e| anyhow::anyhow!("{e}"))
+            })
+    }
+
+    pub fn losses_ships(&mut self, rq: SubjectType) -> anyhow::Result<Vec<(i32, i64)>> {
+        use diesel::dsl::count;
+        use schema::victims;
+
+        let filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
+            match rq {
+                SubjectType::Character(id) => Box::new(victims::character_id.eq(id)),
+                SubjectType::Corporation(id) => Box::new(victims::corporation_id.eq(id)),
+                SubjectType::Alliance(id) => Box::new(victims::alliance_id.eq(id)),
+                SubjectType::Faction(id) => Box::new(victims::faction_id.eq(id)),
+            };
+        
+        self.conn
+            .try_lock()
+            .map_err(|e| anyhow::anyhow!("{e}"))
+            .and_then(|mut conn| {
+                victims::table
+                    .filter(filter)
+                    .group_by(victims::ship_type_id)
+                    .select((victims::ship_type_id, count(victims::ship_type_id)))
+                    .load::<(i32, i64)>(&mut *conn)
+                    .map_err(|e| anyhow::anyhow!("{e}"))
+            })
+    }
+
+    pub fn losses_systems(&mut self, rq: SubjectType) -> anyhow::Result<Vec<(i32, i64)>> {
+        use diesel::dsl::count;
+        use schema::victims;
+        use schema::killmails;
+        use schema::killmails::dsl::*;
+
+        let filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> =
+            match rq {
+                SubjectType::Character(id) => Box::new(victims::character_id.eq(id)),
+                SubjectType::Corporation(id) => Box::new(victims::corporation_id.eq(id)),
+                SubjectType::Alliance(id) => Box::new(victims::alliance_id.eq(id)),
+                SubjectType::Faction(id) => Box::new(victims::faction_id.eq(id)),
+            };
+        
+        self.conn
+            .try_lock()
+            .map_err(|e| anyhow::anyhow!("{e}"))
+            .and_then(|mut conn| {
+                victims::table
+                    .filter(filter)
+                    .inner_join(killmails.on(killmails::killmail_id.eq(victims::killmail_id)))
+                    .group_by(killmails::solar_system_id)
+                    .select((killmails::solar_system_id, count(killmails::solar_system_id)))
+                    .load::<(i32, i64)>(&mut *conn)
                     .map_err(|e| anyhow::anyhow!("{e}"))
             })
     }

@@ -62,11 +62,13 @@ async fn main() -> anyhow::Result<()> {
     });
 
     info!("Launching server at {host}:{port}");
+    let result = "wins|losses";
     let allowed = "character|corporation|alliance|faction";
     let friends_route = format!("/friendly/{{object:{allowed}}}/for/{{subject:{allowed}}}/{{id}}");
     let enemies_route = format!("/enemy/{{object:{allowed}}}/for/{{subject:{allowed}}}/{{id}}");
-    let wins_route = format!("/wins/{{subject:{allowed}}}/{{id}}");
-    let losses_route = format!("/losses/{{subject:{allowed}}}/{{id}}");
+    let report_total_route = format!("/{{rtype:{result}}}/{{subject:{allowed}}}/{{id}}");
+    let report_ships_route = format!("/{{rtype:{result}}}/{{subject:{allowed}}}/{{id}}/ships");
+    let report_systems_route = format!("/{{rtype:{result}}}/{{subject:{allowed}}}/{{id}}/systems");
 
     HttpServer::new(move || {
         App::new()
@@ -81,122 +83,10 @@ async fn main() -> anyhow::Result<()> {
                 web::scope("/api")
                     .route(&friends_route, web::get().to(friends))
                     .route(&enemies_route, web::get().to(enemies))
-                    .route(&wins_route, web::get().to(wins))
-                    .route(&losses_route, web::get().to(losses)),
+                    .route(&report_total_route, web::get().to(report_total))
+                    .route(&report_ships_route, web::get().to(report_ships))
+                    .route(&report_systems_route, web::get().to(report_systems))
             )
-            /*
-                            .route("/statistic", web::get().to(api::statistic))
-                                .route("/killmail/ids/{date}/", web::get().to(api::saved_ids))
-                                .route(
-                                    "/character/{id}/lost/{ship}/",
-                                    web::get().to(api::character::lost_ship),
-                                )
-                                .route(
-                                    "/corporation/{id}/lost/{ship}/",
-                                    web::get().to(api::corporation::lost_ship),
-                                )
-                                .route(
-                                    "/alliance/{id}/lost/{ship}/",
-                                    web::get().to(api::alliance::lost_ship),
-                                )
-                                .route(
-                                    "/character/activity/{id}/",
-                                    web::get().to(api::character::activity),
-                                )
-                                .route(
-                                    "/corporation/activity/{id}/",
-                                    web::get().to(api::corporation::activity),
-                                )
-                                .route(
-                                    "/alliance/activity/{id}/",
-                                    web::get().to(api::alliance::activity),
-                                )
-                                .route(
-                                    "/character/activity/hourly/{id}/",
-                                    web::get().to(api::character::activity_hourly),
-                                )
-                                .route(
-                                    "/corporation/activity/hourly/{id}/",
-                                    web::get().to(api::corporation::activity_hourly),
-                                )
-                                .route(
-                                    "/alliance/activity/hourly/{id}/",
-                                    web::get().to(api::alliance::activity_hourly),
-                                )
-                                .route(
-                                    "/character/friends/char/{id}/",
-                                    web::get().to(api::character::friends_char),
-                                )
-                                .route(
-                                    "/character/enemies/char/{id}/",
-                                    web::get().to(api::character::enemies_char),
-                                )
-                                .route(
-                                    "/character/friends/corp/{id}/",
-                                    web::get().to(api::character::friends_corp),
-                                )
-                                .route(
-                                    "/character/enemies/corp/{id}/",
-                                    web::get().to(api::character::enemies_corp),
-                                )
-                                .route(
-                                    "/character/friends/alli/{id}/",
-                                    web::get().to(api::character::friends_alli),
-                                )
-                                .route(
-                                    "/character/enemies/alli/{id}/",
-                                    web::get().to(api::character::enemies_alli),
-                                )
-                                .route(
-                                    "/corporation/friends/char/{id}/",
-                                    web::get().to(api::corporation::friends_char),
-                                )
-                                .route(
-                                    "/corporation/enemies/char/{id}/",
-                                    web::get().to(api::corporation::enemies_char),
-                                )
-                                .route(
-                                    "/corporation/friends/corp/{id}/",
-                                    web::get().to(api::corporation::friends_corp),
-                                )
-                                .route(
-                                    "/corporation/enemies/corp/{id}/",
-                                    web::get().to(api::corporation::enemies_corp),
-                                )
-                                .route(
-                                    "/corporation/friends/alli/{id}/",
-                                    web::get().to(api::corporation::friends_alli),
-                                )
-                                .route(
-                                    "/corporation/enemies/alli/{id}/",
-                                    web::get().to(api::corporation::enemies_alli),
-                                )
-                                .route(
-                                    "/alliance/friends/char/{id}/",
-                                    web::get().to(api::alliance::friends_char),
-                                )
-                                .route(
-                                    "/alliance/enemies/char/{id}/",
-                                    web::get().to(api::alliance::enemies_char),
-                                )
-                                .route(
-                                    "/alliance/friends/corp/{id}/",
-                                    web::get().to(api::alliance::friends_corp),
-                                )
-                                .route(
-                                    "/alliance/enemies/corp/{id}/",
-                                    web::get().to(api::alliance::enemies_corp),
-                                )
-                                .route(
-                                    "/alliance/friends/alli/{id}/",
-                                    web::get().to(api::alliance::friends_alli),
-                                )
-                                .route(
-                                    "/alliance/enemies/alli/{id}/",
-                                    web::get().to(api::alliance::enemies_alli),
-                                ),
-                        )
-            */
             .service(
                 web::scope("/killmail")
                     .route("/{date}", web::get().to(ids_by_date))
@@ -231,29 +121,54 @@ fn subject<S: Into<String>>(arg: S, id: i32) -> SubjectType {
     }
 }
 
-async fn wins(ctx: Context, args: web::Path<(String, i32)>) -> impl Responder {
-    let (subj, id) = args.into_inner();
+async fn report_total(ctx: Context, args: web::Path<(String, String, i32)>) -> impl Responder {
+    let (rtype, subj, id) = args.into_inner();
     let result = ctx
         .api
         .try_lock()
         .map_err(|e| anyhow!("{e}"))
-        .and_then(|mut api| api.wins(subject(subj, id)))
+        .and_then(|mut api| match rtype.as_str() {
+            "wins" => api.wins(subject(subj, id)),
+            "losses" => api.losses(subject(subj, id)),
+            _ => unreachable!(),
+        })
         .map_err(|e| anyhow!("{e}"));
 
     Result::from(result)
 }
 
-async fn losses(ctx: Context, args: web::Path<(String, i32)>) -> impl Responder {
-    let (subj, id) = args.into_inner();
+async fn report_systems(ctx: Context, args: web::Path<(String, String, i32)>) -> impl Responder {
+    let (rtype, subj, id) = args.into_inner();
     let result = ctx
         .api
         .try_lock()
         .map_err(|e| anyhow!("{e}"))
-        .and_then(|mut api| api.losses(subject(subj, id)))
+        .and_then(|mut api| match rtype.as_str() {
+            "wins" => api.wins_systems(subject(subj, id)),
+            "losses" => api.losses_systems(subject(subj, id)),
+            _ => unreachable!(),
+        })
         .map_err(|e| anyhow!("{e}"));
 
     Result::from(result)
 }
+
+async fn report_ships(ctx: Context, args: web::Path<(String, String, i32)>) -> impl Responder {
+    let (rtype, subj, id) = args.into_inner();
+    let result = ctx
+        .api
+        .try_lock()
+        .map_err(|e| anyhow!("{e}"))
+        .and_then(|mut api| match rtype.as_str() {
+            "wins" => api.wins_ships(subject(subj, id)),
+            "losses" => api.losses_ships(subject(subj, id)),
+            _ => unreachable!(),
+        })
+        .map_err(|e| anyhow!("{e}"));
+
+    Result::from(result)
+}
+
 
 async fn friends(ctx: Context, args: web::Path<(String, String, i32)>) -> impl Responder {
     let (obj, subj, id) = args.into_inner();
