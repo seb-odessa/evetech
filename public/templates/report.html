@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Who is Here</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <meta charset="UTF-8">
+</head>
+
+<body>
+    <script type="text/javascript" src="/js/script.js"></script>
+    <div class="content">
+        <h3>Here is</h3>
+        <div class="hidden" id="names">{{names}}</div>
+
+        {{#if names}}
+        <table id="table">
+            <tr>
+                <th>Character</th>
+                <th>Corporation</th>
+                <th>Alliance</th>
+                <th>Wins</th>
+                <th>Losses</th>
+                <th>Wins (%)</th>
+                <th>Losses (%)</th>
+                <th>Damage Dealt</th>
+                <th>Damage Received</th>
+                <th>Damage Dealt (%)</th>
+                <th>Damage Received(%)</th>
+            </tr>
+            {{#each names}}
+            <tr>
+                <td id="character:[{{this}}]">{{this}}</td>
+                <td id="corporation:[{{this}}]"></td>
+                <td id="alliance:[{{this}}]"></td>
+                <td id="wins_count:[{{this}}]" align="right"></td>
+                <td id="losses_count:[{{this}}]" align="right"></td>
+                <td id="wins_percent:[{{this}}]" align="right"></td>
+                <td id="losses_percent:[{{this}}]" align="right"></td>
+                <td id="damage_dealt:[{{this}}]" align="right"></td>
+                <td id="damage_received:[{{this}}]" align="right"></td>
+                <td id="damage_dealt_percent:[{{this}}]" align="right"></td>
+                <td id="damage_received_percent:[{{this}}]" align="right"></td>
+            </tr>
+            {{/each}}
+        </table>
+        {{else}}
+        <p> No characters found</p>
+        {{/if}}
+
+        <script>
+            const names = getArray('names');
+            console.log(names);
+
+            function updateElement(char, area, link) {
+                insertInto(area + ':[' + char + ']', link);
+            }
+
+            async function updateContent(names) {
+                try {
+                    const data = await requestIdsAsync(names);
+                    for (const object of data.characters) {
+                        // console.log(object);
+                        const name = object.name;
+                        const character = await getObjectAsync('characters', object.id);
+                        // console.log(character);
+
+                        const charLink = makeRef('character', object.id, character.name);
+                        updateElement(name, 'character', charLink);
+
+                        const corporation = await getObjectAsync('corporations', character.corporation_id);
+                        // console.log(corporation);
+
+                        const corpLink = makeRef('corporation', character.corporation_id, corporation.name);
+                        updateElement(name, 'corporation', corpLink);
+
+                        if (character.alliance_id !== undefined) {
+                            const alliance = await getObjectAsync('alliances', corporation.alliance_id);
+                            // console.log(alliance);
+
+                            const alliLink = makeRef('alliance', corporation.alliance_id, alliance.name);
+                            updateElement(name, 'alliance', alliLink);
+                        }
+
+                        const battles = await requestBattleAsync('character', object.id);
+                        // console.log(battles);
+
+                        updateElement(name, 'wins_count', makeParagraph(battles.wins.count));
+                        updateElement(name, 'losses_count', makeParagraph(battles.losses.count));
+                        updateElement(name, 'wins_percent', makeParagraph(battles.wins.count_percent));
+                        updateElement(name, 'losses_percent', makeParagraph(battles.losses.count_percent));
+                        updateElement(name, 'damage_dealt', makeParagraph(battles.wins.damage));
+                        updateElement(name, 'damage_received', makeParagraph(battles.losses.damage));
+                        updateElement(name, 'damage_dealt_percent', makeParagraph(battles.wins.damage_percent));
+                        updateElement(name, 'damage_received_percent', makeParagraph(battles.losses.damage_percent));
+                    }
+
+                } catch (error) {
+                    console.log(error.message);
+                }
+            }
+
+            updateContent(names);
+        </script>
+
+        <div align='center'>
+            <a href="/who/">Home</a>
+        </div>
+    </div>
+</body>
+
+</html>

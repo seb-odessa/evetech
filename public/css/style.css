@@ -1,0 +1,68 @@
+body {
+    background-color: rgb(15, 41, 49);
+    color: rgb(240, 234, 234);
+}
+
+p {
+    padding: 0%;
+    margin-block: auto;
+}
+
+a {
+    color: rgb(250, 183, 216);
+}
+
+table,
+td,
+th {
+    border: 1px solid;
+    padding: 5px;
+}
+
+table {
+    /* width: 80%; */
+    border-collapse: collapse;
+}
+
+.activity a {
+    color: rgb(250, 183, 216);
+}
+
+.friends a {
+    color: rgb(250, 183, 216);
+}
+
+.enemies a {
+    color: rgb(250, 183, 216);
+}
+
+.content {
+    overflow: auto;
+    /* border: 1px solid #999999; */
+}
+
+.content a {
+    color: rgb(250, 183, 216);
+}
+
+.content div {
+    padding: 5px;
+    /* border: 1px solid #999999; */
+}
+
+.portrait {
+    float: left;
+    width: 128px;
+    /* background: #1c87c9; */
+    /* border: 1px solid #999999; */
+}
+
+.info {
+    float: left;
+    /* border: 1px solid #999999; */
+    /* background: #8ebf42; */
+}
+
+.hidden {
+    display: none;
+}

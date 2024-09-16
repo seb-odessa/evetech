@@ -1,0 +1,228 @@
+<div class="content">
+    <div class="portrait">
+        <img src="{{{img_128x128}}}" alt="128x128" width="128" height="128">
+    </div>
+    <div class="info">
+        <div id="character">
+            Character:
+            <a href="/gui/character/{{character_name}}/">{{character_name}}</a>
+            <a href="https://evewho.com/character/{{character_id}}">evewho</a>
+            <a href="https://zkillboard.com/character/{{character_id}}/">zkillboard.com</a>
+        </div>
+        <div id="corporation">
+            Corporation:
+            <div id="{{corporation_id}}" div style="display: inline">...</div>
+            <script>
+                fetch("https://esi.evetech.net/latest/corporations/{{corporation_id}}/?datasource=tranquility")
+                    .then(response => response.json())
+                    .then(json => document.getElementById("{{corporation_id}}").innerHTML =
+                        `<a href="/gui/corporation/${json.name}/">${json.name}</a>` +
+                        " [" + json.ticker + "] (" + json.member_count + ")"
+                    )
+                    .catch((err) => console.log("Can't access: " + err));
+            </script>
+            <a href="https://evewho.com/corporation/{{corporation_id}}">evewho</a>
+            <a href="https://zkillboard.com/corporation/{{corporation_id}}/">zkillboard.com</a>
+        </div>
+        {{#if alliance_id}}
+        <div id="aliance">
+            Alliance:
+            <div id="{{alliance_id}}" div style="display: inline">...</div>
+            <script>
+                fetch("https://esi.evetech.net/latest/alliances/{{alliance_id}}/?datasource=tranquility")
+                    .then(response => response.json())
+                    .then(json => document.getElementById("{{alliance_id}}").innerHTML =
+                        `<a href="/gui/alliance/${json.name}/">${json.name}</a>` +
+                        " [" + json.ticker + "]"
+                    )
+                    .catch((err) => console.log("Can't access: " + err));
+            </script>
+            <a href="https://evewho.com/alliance/{{alliance_id}}">evewho</a>
+            <a href="https://zkillboard.com/alliance/{{alliance_id}}/">zkillboard.com</a>
+        </div>
+        {{/if}}
+        <div id="details">
+            <p>Character Gender: {{character_gender}}</p>
+            <p>Birthday: {{character_birthday}}</p>
+            <p>Security Status: {{character_security_status}}</p>
+        </div>
+    </div>
+    <div class="query">
+        <script type="text/javascript">
+            function get_action(form) {
+                const character = document.getElementById("character_name").value
+                form.action = "/gui/character/" + character + "/";
+                form.method = "get";
+            }
+        </script>
+        <form onsubmit="get_action(this);">
+            <input type="text" id="character_name" placeholder="Search Character ...">
+            <input type="submit" hidden />
+        </form>
+    </div>
+</div>
+<div class="activity">
+    <h4>Activity last 30 days:</h4>
+    <div id="wins_head" div style="display: inline">...</div>
+    <div id="wins" div style="display: inline">...</div>
+    <div id="losses_head" div style="display: inline">...</div>
+    <div id="losses" div style="display: inline">...</div>
+    <script>
+        fetch("http://185.87.51.139:8080/api/character/activity/{{character_id}}/")
+            .then(response => response.json())
+            .then(activities => {
+                const wins_prefix = "win";
+                const wins_damage = activities.wins.total_damage;
+                const wins_solar_systems = sort_by_count(activities.wins.solar_systems);
+                const wins_ships = sort_by_count(activities.wins.ships);
+                document.getElementById("wins_head").innerHTML = "<h5>Wins: " + activities.wins.total_count + "</h5>";
+                document.getElementById("wins").innerHTML =
+                    make_damage(wins_damage) +
+                    make_items("Systems with most activities", wins_prefix, wins_solar_systems) +
+                    make_items("Favorite ships", wins_prefix, wins_ships);
+
+                requestNamesAsync(Array.from(wins_solar_systems.keys()))
+                    .then(names => {
+                        names.forEach((obj) => {
+                            const id = obj.id;
+                            const name = obj.name;
+                            const count = wins_solar_systems.get(`${id}`);
+                            const href = `<a href="https://zkillboard.com/system/${id}/">${name} (${count})</a>`;
+                            const element = `${wins_prefix}_${id}`;
+                            document.getElementById(element).innerHTML = href;
+                        });
+                    });
+
+                requestNamesAsync(Array.from(wins_ships.keys()))
+                    .then(names => {
+                        names.forEach((obj) => {
+                            const id = obj.id;
+                            const name = obj.name;
+                            const count = wins_ships.get(`${id}`);
+                            const href = `<a href="/gui/character/{{character_id}}/lost/${id}/">${name} (${count})</a>`;
+                            const element = `${wins_prefix}_${id}`;
+                            document.getElementById(element).innerHTML = href;
+                        });
+                    });
+
+                const losses_prefix = "loss";
+                const losses_damage = activities.losses.total_damage;
+                const losses_solar_systems = sort_by_count(activities.losses.solar_systems);
+                const losses_ships = sort_by_count(activities.losses.ships);
+                document.getElementById("losses_head").innerHTML = "<h5>Losses: " + activities.losses.total_count + "</h5>";
+                document.getElementById("losses").innerHTML =
+                    make_damage(losses_damage) +
+                    make_items("Systems with most activities", losses_prefix, losses_solar_systems) +
+                    make_items("Favorite ships", losses_prefix, losses_ships);
+
+                requestNamesAsync(Array.from(losses_solar_systems.keys()))
+                    .then(names => {
+                        names.forEach((obj) => {
+                            const id = obj.id;
+                            const name = obj.name;
+                            const count = losses_solar_systems.get(`${id}`);
+                            const href = `<a href="https://zkillboard.com/system/${id}/">${name} (${count})</a>`;
+                            const element = `${losses_prefix}_${id}`;
+                            document.getElementById(element).innerHTML = href;
+                        });
+                    });
+
+                requestNamesAsync(Array.from(losses_ships.keys()))
+                    .then(names => {
+                        names.forEach((obj) => {
+                            const id = obj.id;
+                            const name = obj.name;
+                            const count = losses_ships.get(`${id}`);
+                            const href = `<a href="/gui/character/{{character_id}}/lost/${id}/">${name} (${count})</a>`;
+                            const element = `${losses_prefix}_${id}`;
+                            document.getElementById(element).innerHTML = href;
+                        });
+                    });
+            })
+            .catch((err) => console.log("Can't access: " + err));
+    </script>
+</div>
+<div class="friends">
+    <h5>Friends:</h5>
+    <div id="friendly_chars" div style="display: inline">...</div>
+    <div id="friendly_corps" div style="display: inline">...</div>
+    <div id="friendly_allis" div style="display: inline">...</div>
+    <script>
+        fetch("http://185.87.51.139:8080/api/character/friends/char/{{character_id}}/")
+            .then(response => response.json())
+            .then(friends => {
+                let map = sort_by_count(friends);
+                document.getElementById("friendly_chars").innerHTML = make_items("Friendly Characters", "friend", map);
+                requestNamesAsync(Array.from(map.keys())).then(names => update("character", "friend", names, map));
+            })
+            .catch((err) => console.log("Can't access: " + err));
+
+        fetch("http://185.87.51.139:8080/api/character/friends/corp/{{character_id}}/")
+            .then(response => response.json())
+            .then(friends => {
+                let map = sort_by_count(friends);
+                map.delete(`{{corporation_id}}`);
+                document.getElementById("friendly_corps").innerHTML = make_items("Friendly Corporations", "friend", map);
+                requestNamesAsync(Array.from(map.keys())).then(names => update("corporation", "friend", names, map));
+            })
+            .catch((err) => console.log("Can't access: " + err));
+
+        fetch("http://185.87.51.139:8080/api/character/friends/alli/{{character_id}}/")
+            .then(response => response.json())
+            .then(friends => {
+                let map = sort_by_count(friends);
+                map.delete(`{{alliance_id}}`);
+                document.getElementById("friendly_allis").innerHTML = make_items("Friendly Alliances", "friend", map);
+                requestNamesAsync(Array.from(map.keys())).then(names => update("alliance", "friend", names, map));
+            })
+            .catch((err) => console.log("Can't access: " + err));
+    </script>
+</div>
+<div class="enemies">
+    <h5>Enemies:</h5>
+    <div id="enemy_chars" div style="display: inline">...</div>
+    <div id="enemy_corps" div style="display: inline">...</div>
+    <div id="enemy_allis" div style="display: inline">...</div>
+    <script>
+        fetch("http://185.87.51.139:8080/api/character/enemies/char/{{character_id}}/")
+            .then(response => response.json())
+            .then(enemies => {
+                let map = sort_by_count(enemies);
+                document.getElementById("enemy_chars").innerHTML = make_items("Enemy Characters", "enemy", map);
+                requestNamesAsync(Array.from(map.keys())).then(names => update("character", "enemy", names, map));
+            })
+            .catch((err) => console.log("Can't access: " + err));
+
+        fetch("http://185.87.51.139:8080/api/character/enemies/corp/{{character_id}}/")
+            .then(response => response.json())
+            .then(enemies => {
+                const map = sort_by_count(enemies, 6);
+                document.getElementById("enemy_corps").innerHTML = make_items("Enemy Corporations", "enemy", map);
+                requestNamesAsync(Array.from(map.keys())).then(names => update("corporation", "enemy", names, map));
+            })
+            .catch((err) => console.log("Can't access: " + err));
+
+        fetch("http://185.87.51.139:8080/api/character/enemies/alli/{{character_id}}/")
+            .then(response => response.json())
+            .then(enemies => {
+
+                let map = sort_by_count(enemies, 6);
+                document.getElementById("enemy_allis").innerHTML = make_items("Enemy Alliances", "enemy", map);
+                requestNamesAsync(Array.from(map.keys())).then(names => update("alliance", "enemy", names, map));
+            })
+            .catch((err) => console.log("Can't access: " + err));
+    </script>
+</div>
+<div class="prime_time">
+    <h5>{{character_name}}'s prime time:</h5>
+    <canvas id="prime_time" width="800" height="200">Your browser does not support the canvas element.</canvas>
+    <script>
+        fetch("http://185.87.51.139:8080/api/character/activity/hourly/{{character_id}}/")
+            .then(response => response.json())
+            .then(hourly => draw_prime_time(hourly));
+    </script>
+</div>
+
+<div align='center'>
+    <a href="/gui/who/">Home</a>
+</div>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>{{id}}</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <script type="text/javascript" src="/js/script.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <div class="content">
+        <div class="hidden" id="id">{{id}}</div>
+        <div id="portrait" class="portrait">
+            <img src="$(img_128x128)" alt="128x128" width="128" height="128">
+        </div>
+        <div class="info">
+            <div id="character">
+                Character:
+                <div id='char_name' div style="display: inline">...</div>
+                <a href="https://evewho.com/character/{{id}}">[evewho]</a>
+                <a href="https://zkillboard.com/character/{{id}}/">[zkillboard]</a>
+            </div>
+            <div id="corporation">
+                Corporation:
+                <div id="corp_name" div style="display: inline">...</div>
+                <a href="https://evewho.com/corporation/$(corporation_id)">[evewho]</a>
+                <a href="https://zkillboard.com/corporation/$(corporation_id)/">[zkillboard]</a>
+            </div>
+            <div id="alliance">
+                Alliance:
+                <div id="alli_name" div style="display: inline">...</div>
+                <a href="https://evewho.com/alliance/$(alliance_id)">[evewho]</a>
+                <a href="https://zkillboard.com/alliance/$(alliance_id)/">[zkillboard]</a>
+            </div>
+            <div id="details">
+                <p>Character Gender: $(gender)</p>
+                <p>Birthday: $(birthday)</p>
+                <p>Security Status: $(security_status)</p>
+            </div>
+        </div>
+    </div>
+    <div class="activity">
+        <h4>Activity last 30 days:</h4>
+        <div id="wins_head">...</div>
+        <div id="wins">...</div>
+        <div id="losses_head">...</div>
+        <div id="losses">...</div>
+    </div>
+
+    <script>
+        const element = document.getElementById('id');
+        const value = element.textContent || element.innerText;
+        const id = parseInt(value, 10);
+        console.log('id: [' + id + ']');
+
+        async function updateContent(id) {
+            try {
+                const character = await getObjectAsync('characters', id);
+                // console.log(character);
+
+                document.title = character.name;
+                document.getElementById('char_name').innerText = character.name;
+                document.querySelectorAll('#corporation a').forEach(anchor => {
+                    anchor.href = anchor.href.replace('$(corporation_id)', character.corporation_id);
+                });
+
+                const corporation = await getObjectAsync('corporations', character.corporation_id);
+                // console.log(corporation);
+                insertInto('corp_name', makeRef('corporation', character.corporation_id, corporation.name));
+
+                if (character.alliance_id !== undefined) {
+                    const alliance = await getObjectAsync('alliances', corporation.alliance_id);
+                    // console.log(alliance);
+
+                    document.querySelectorAll('#alliance a').forEach(anchor => {
+                        anchor.href = anchor.href.replace('$(alliance_id)', character.corporation_id);
+                    });
+                    insertInto('alli_name', makeRef('alliance', corporation.alliance_id, alliance.name));
+
+                } else {
+                    const element = document.getElementById('alliance');
+                    element.remove();
+                }
+
+                const detailsDiv = document.getElementById('details');
+                detailsDiv.innerHTML = detailsDiv.innerHTML.replace('$(gender)', character.gender);
+                detailsDiv.innerHTML = detailsDiv.innerHTML.replace('$(birthday)', character.birthday);
+                detailsDiv.innerHTML = detailsDiv.innerHTML.replace('$(security_status)', character.security_status.toFixed(2));
+
+                const portrait = await getObjectAsync('characters', id, 'portrait');
+                // console.log(portrait);
+                insertInto('portrait', makeImage(portrait.px128x128, "128x128"));
+
+                const battle = await requestBattleAsync('character', id);
+                console.log(battle);
+
+                document.getElementById("wins_head").innerHTML = "<h4>Wins: " + battle.wins.count + ' (' + battle.wins.count_percent
+                    + "%) </h4>";
+                 document.getElementById("losses_head").innerHTML = "<h4>Losses: " + battle.losses.count + ' (' + battle.losses.count_percent
+                    + "%) </h4>";
+
+            } catch (error) {
+                console.log(error.message);
+            }
+        }
+
+        updateContent(id);
+    </script>
+
+    <div align='center'>
+        <a href="/who/">Home</a>
+    </div>
+
+</body>
+
+</html>
