@@ -11,8 +11,6 @@
     <script type="text/javascript" src="/js/script.js"></script>
     <div class="content">
         <h3>Here is</h3>
-        <div class="hidden" id="names">{{names}}</div>
-
         {{#if names}}
         <table id="table">
             <tr>
@@ -49,9 +47,6 @@
         {{/if}}
 
         <script>
-            const names = getArray('names');
-            console.log(names);
-
             function updateElement(char, area, link) {
                 insertInto(area + ':[' + char + ']', link);
             }
@@ -62,6 +57,7 @@
                     for (const object of data.characters) {
                         // console.log(object);
                         const name = object.name;
+                        
                         const character = await getObjectAsync('characters', object.id);
                         // console.log(character);
 
@@ -99,6 +95,9 @@
                     console.log(error.message);
                 }
             }
+
+            const names = [{{#each names}}"{{this}}"{{#unless @last}}, {{/unless}}{{/each}}];
+            console.log(names);
 
             updateContent(names);
         </script>

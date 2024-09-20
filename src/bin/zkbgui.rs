@@ -29,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
 
     let context = web::Data::new(handlebars);
 
-    info!("Try http://{host}:{port}/");
+    info!("Try http://{host}:{port}/who/");
     HttpServer::new(move || {
         App::new()
             .app_data(context.clone())
