@@ -1,85 +1,92 @@
 use itertools::Itertools;
 
 use crate::apps::waypoint::WayPoint;
-use crate::common::Position;
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::fmt;
+use std::mem::swap;
 
+#[derive(Debug, Clone)]
 pub struct Route {
-    pub start: WayPoint,
-    pub belts: HashMap<i32, WayPoint>,
+    start: WayPoint,
+    waypoints: HashMap<i32, WayPoint>,
+    order: Vec<i32>,
 }
 impl Route {
     pub fn new(start: WayPoint) -> Self {
         Self {
             start: start,
-            belts: HashMap::new(),
+            waypoints: HashMap::new(),
+            order: Vec::new(),
         }
     }
 
     pub fn add(&mut self, point: WayPoint) {
-        self.belts.insert(point.id, point);
+        let id = point.id;
+        self.waypoints.insert(id, point);
+        self.order.push(id);
     }
 
-    pub fn brute_force(&self) -> (f64, Vec<i32>) {
-        if self.belts.is_empty() {
-            return (0.0, vec![self.start.id]);
+    pub fn start(&self) -> WayPoint {
+        self.start.clone()
+    }
+
+    pub fn set_departue(&mut self, start: WayPoint) {
+        self.start = start;
+    }
+
+    pub fn get(&self, id: &i32) -> Option<&WayPoint> {
+        if self.start.id.eq(id) {
+            return Some(&self.start)
         }
+        self.waypoints.get(id)
+    }
 
+    pub fn order(&self) -> Vec<i32> {
+        self.order.clone()
+    }
+
+    pub fn complete(&self) -> Vec<i32> {
+        std::iter::once(self.start.id).chain(self.order.iter().cloned()).collect()
+    }
+
+    pub fn len(&self) -> f64 {
+        self.route_length(&self.order)
+    }
+
+    pub fn build_best(&mut self) {
         let mut minimal = f64::MAX;
-        let mut route = Vec::new();
-        let mut calculated = HashSet::new();
-
-        let ordinal = self.belts.keys().cloned().collect::<Vec<_>>();
-        let len = ordinal.len();
-
-        for path in ordinal.iter().permutations(len) {
-            if !calculated.contains(&path) {
-                let mut reversed = path.clone();
-                reversed.reverse();
-                // println!("reversed: {:?}", reversed);
-                calculated.insert(reversed);
-
-
-                let distance = self.length(&path);
-                if distance < minimal {
-                    minimal = distance;
-                    route = path.into_iter().cloned().collect();
-                    route.insert(0, self.start.id);
-                }
+        let permutations = self.order.iter().permutations(self.order.len());
+        let mut best = Vec::new();
+        for permutaion in permutations {
+            let mut route = permutaion.into_iter().cloned().collect();
+            let length = self.route_length(&route);
+            if length < minimal {
+                minimal = length;
+                swap(&mut best, &mut route);
             }
         }
-        (minimal, route)
+        swap(&mut self.order, &mut best);
     }
 
-    fn length(&self, route: &Vec<&i32>) -> f64 {
+    fn route_length(&self, route: &Vec<i32>) -> f64 {
         let mut distance = 0.0;
-        let mut previous = &self.start.position;
-        let mut ids = route.iter();
-        while let Some(id) = ids.next() {
-            let current = &self
-                .belts
+        let mut current = &self.start;
+        for id in route {
+            let waipoint: &WayPoint = self
+                .waypoints
                 .get(id)
-                .expect(&format!("Belt Id {id} must be in self.belts!"))
-                .position;
-            distance += self.distance(previous, current);
-            previous = current;
+                .expect(&format!("The {id} must be in map"));
+            distance += current.distance_to(&waipoint);
+            current = &waipoint;
         }
         return distance;
-    }
-
-    fn distance(&self, lhv: &Position, rhv: &Position) -> f64 {
-        // NOTE May be used different algorithm, e.g. use requred angle
-        //      instead of distance
-        Position::distance(lhv, rhv)
     }
 }
 
 impl fmt::Display for Route {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "{}", self.start)?;
-        for (_, wp) in &self.belts {
+        for (_, wp) in &self.waypoints {
             writeln!(f, "{}", wp)?;
         }
         write!(f, "")

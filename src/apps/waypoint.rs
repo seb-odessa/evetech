@@ -15,9 +15,12 @@ impl WayPoint {
             position: position.clone(),
         }
     }
+    pub fn distance_to(&self, other: &Self) -> f64 {
+        self.position.distance_to(&other.position)
+    }
 }
 impl fmt::Display for WayPoint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}, {}, {}", self.id, self.name, self.position)
+        write!(f, "{}, {}", self.id, self.name)
     }
 }

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use docopt::Docopt;
 use serde::Deserialize;
 
@@ -43,8 +45,6 @@ async fn main() -> anyhow::Result<()> {
     let args: Args = Docopt::new(USAGE)
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
-
-    // println!("{:?}\n", args);
 
     build_route(&args.arg_system, &args.flag_mode).await?;
 
@@ -110,27 +110,53 @@ async fn build_route(system: &String, mode: &Mode) -> anyhow::Result<()> {
 
 async fn best_route(esc: &Client, id: i32, start: &WayPoint, _: &Mode) -> anyhow::Result<()> {
     let system = <Client as ById<universe::System>>::load(&esc, id).await?;
-    if let Some(celestials) = system.planets {
-        for celestial in celestials {
-            if let Some(ref belts) = celestial.asteroid_belts {
-                let mut route = Route::new(start.clone());
+    if let Some(planets) = system.planets {
+        let mut route = Route::new(start.clone());
+        let mut routes = HashMap::new();
+        for planet in &planets {
+            if let Some(belts) = &planet.asteroid_belts {
+                let planet =
+                    <Client as ById<universe::Planet>>::load(&esc, planet.planet_id).await?;
+
+                route.add(WayPoint::new(
+                    planet.planet_id,
+                    &planet.name,
+                    &planet.position,
+                ));
+
+                let subroute = routes.entry(planet.planet_id).or_insert(Route::new(start.clone()));
                 for id in belts {
                     let belt = <Client as ById<universe::AsteroidBelt>>::load(&esc, *id).await?;
-                    route.add(WayPoint::new(*id, &belt.name, &belt.position));
+                    subroute.add(WayPoint::new(*id, &belt.name, &belt.position));
                 }
-                let (len, ids) = route.brute_force();
-                for id in ids {
-                    if let Some(wp) = route.belts.get(&id) {
-                        println!("{}", wp);
-                    } else {
-                        println!("{}", route.start);
+            }
+        }
+
+        route.build_best();
+        print(&route);
+
+        let mut start = None;
+        for id in route.complete() {
+            if let Some(waypoint) = route.get(&id) {
+                if let Some(route) = routes.get_mut(&waypoint.id) {
+                    if let Some(start) = start {
+                        route.set_departue(start);
                     }
+                    route.build_best();
+                    print(&route);
                 }
-                println!("Total route length {:.0} Mega Meters", len / 1_000_000.0);
-                println!();
+                start = Some(waypoint.clone());
             }
         }
     }
 
     Ok(())
+}
+
+fn print(route: &Route) {
+    for id in route.complete() {
+        if let Some(wp) = route.get(&id) {
+            println!("{}", wp);
+        }
+    }
 }

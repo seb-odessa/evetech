@@ -24,5 +24,5 @@ pub use star::Star;
 pub use stargate::Stargate;
 pub use stargate::StargateDestination;
 pub use station::Station;
-pub use system::CelestialBodies;
+pub use system::PlanetarySystem;
 pub use system::System;

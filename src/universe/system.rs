@@ -11,7 +11,7 @@ pub struct System {
     pub security_status: f32,
     pub security_class: Option<String>,
     pub star_id: Option<i32>,
-    pub planets: Option<Vec<CelestialBodies>>,
+    pub planets: Option<Vec<PlanetarySystem>>,
     pub stargates: Option<Vec<i32>>,
     pub stations: Option<Vec<i32>>,
 }
@@ -38,12 +38,12 @@ impl fmt::Display for System {
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Eq)]
-pub struct CelestialBodies {
+pub struct PlanetarySystem {
     pub planet_id: i32,
     pub asteroid_belts: Option<Vec<i32>>,
     pub moons: Option<Vec<i32>>,
 }
-impl fmt::Display for CelestialBodies {
+impl fmt::Display for PlanetarySystem {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "  Planet Id: {}", self.planet_id)?;
         utils::write("  Belts Ids", &self.asteroid_belts, f)?;
