@@ -1,5 +1,22 @@
-use std::fmt;
 use crate::common::Position;
+use crate::esi::api::Uid;
+use crate::esi::api::Uri;
+use crate::esi::client::PARAM;
+use crate::esi::client::UNIVERSE;
+
+use anyhow::anyhow;
+
+use std::fmt;
+
+impl Uri for Stargate {
+    fn uri(id: &Uid) -> anyhow::Result<String> {
+        if let Uid::Id(id) = id {
+            Ok(format!("{UNIVERSE}/stations/{id}/?{PARAM}"))
+        } else {
+            Err(anyhow!("Expected Uid::Id(i32)"))
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Stargate {

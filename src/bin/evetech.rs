@@ -2,6 +2,10 @@ use docopt::Docopt;
 use serde::Deserialize;
 
 use evetech::common;
+use evetech::esi::api::Uid;
+use evetech::esi::api::Uri;
+use evetech::esi::EveApi;
+
 use evetech::esi::EveSwaggerClient as EveClient;
 use evetech::esi::Loadable;
 use evetech::esi::LoadableById;
@@ -10,6 +14,7 @@ use evetech::market;
 use evetech::universe;
 
 use std::any::TypeId;
+use std::fmt::Debug;
 use std::fmt::Display;
 
 const USAGE: &'static str = "
@@ -79,6 +84,7 @@ async fn main() -> anyhow::Result<()> {
     println!("{:?}\n", args);
 
     let esc: EveClient = EveClient::new();
+    let api = EveApi::new();
     match args.arg_command {
         Command::Status => status(&esc).await?,
         Command::Search => search(&esc, args.arg_args.clone()).await?,
@@ -88,8 +94,9 @@ async fn main() -> anyhow::Result<()> {
         Command::Planet => display::<universe::Planet>(&esc, args.arg_args.clone()).await?,
         Command::Moon => display::<universe::Moon>(&esc, args.arg_args.clone()).await?,
         Command::Belt => display::<universe::AsteroidBelt>(&esc, args.arg_args.clone()).await?,
-        Command::Stargate => display::<universe::Stargate>(&esc, args.arg_args.clone()).await?,
-        Command::Station => display::<universe::Station>(&esc, args.arg_args.clone()).await?,
+        Command::Stargate => print::<universe::Stargate>(&api, args.arg_args.clone()).await?,
+        Command::Station => print::<universe::Station>(&api, args.arg_args.clone()).await?,
+        //display::<universe::Station>(&esc, args.arg_args.clone()).await?,
         Command::Constellation => {
             display::<universe::Constellation>(&esc, args.arg_args.clone()).await?
         }
@@ -211,5 +218,25 @@ where
         let obj = <EveClient as LoadableById<T>>::load(&esc, id).await?;
         println!("{}", obj);
     }
+    Ok(())
+}
+
+async fn print<T: 'static>(api: &EveApi, args: Vec<String>) -> anyhow::Result<()>
+where
+    T: Uri + Debug + for<'de> Deserialize<'de>,
+{
+    let mut ids = Vec::new();
+    for arg in args {
+        if let Ok(id) = arg.parse::<i32>() {
+            ids.push(id)
+        }
+    }
+
+    for id in ids {
+        let uid = Uid::Id(id);
+        let obj = api.load::<T>(&uid).await?;
+        println!("{:?}", obj);
+    }
+
     Ok(())
 }

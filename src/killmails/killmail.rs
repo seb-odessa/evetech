@@ -1,5 +1,21 @@
 
 use super::{attacker::Attacker, victim::Victim};
+use crate::esi::api::Uid;
+use crate::esi::api::Uri;
+use crate::esi::client::PARAM;
+use crate::esi::client::KILLMAILS;
+
+use anyhow::anyhow;
+
+impl Uri for Killmail {
+    fn uri(id: &Uid) -> anyhow::Result<String> {
+        if let Uid::Killmail(id, hash) = id {
+            Ok(format!("{KILLMAILS}/{id}/{hash}/?{PARAM}"))
+        } else {
+            Err(anyhow!("Expected Uid::Killmail(i32, String)"))
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Killmail {

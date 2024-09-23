@@ -1,6 +1,8 @@
 use chrono::NaiveDate;
 use env_logger;
+use evetech::esi::api::Uid;
 use evetech::esi::EveApi;
+use evetech::killmails::Killmail;
 use log::info;
 
 use std::collections::HashMap;
@@ -55,7 +57,8 @@ async fn main() -> anyhow::Result<()> {
 
             for (id, hash) in map {
                 info!("{id} -> {hash}");
-                if let Ok(killmail) = api.load_killmail(id, hash.clone()).await {
+                let uid = Uid::Killmail(id, hash);
+                if let Ok(killmail) = api.load::<Killmail>(&uid).await {
                     client
                         .post(&zkbinfo_save_api)
                         .json(&killmail)
@@ -67,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
                         print!(".");
                         thread::sleep(Duration::from_secs(1));
                     }
-                    if let Ok(killmail) = api.load_killmail(id, hash).await {
+                    if let Ok(killmail) = api.load::<Killmail>(&uid).await {
                         client
                             .post(&zkbinfo_save_api)
                             .json(&killmail)

@@ -1,37 +1,38 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use serde::Deserialize;
+use std::fmt::Debug;
 
 use crate::esi::client::KILLMAILS;
 use crate::esi::client::PARAM;
-use crate::esi::client::UNIVERSE;
-use crate::{killmails::killmail, universe};
+use crate::killmails::killmail;
 
 use super::{ApiClient, EveSwaggerClient};
-pub struct EveApi {
-    client: EveSwaggerClient,
-    cache: Arc<Mutex<HashMap<i32, universe::Station>>>,
+
+pub enum Uid {
+    Id(i32),
+    Killmail(i32, String),
 }
 
+pub trait Uri: Clone + Send + Sync + 'static {
+    fn uri(id: &Uid) -> anyhow::Result<String>;
+}
+
+pub struct EveApi {
+    client: EveSwaggerClient,
+}
 impl EveApi {
     pub fn new() -> Self {
         Self {
             client: EveSwaggerClient::new(),
-            cache: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
-    pub async fn load(&self, id: i32) -> anyhow::Result<universe::Station> {
-        if let Some(station) = self.cache.lock().unwrap().get(&id) {
-            return Ok(station.clone());
-        }
-
-        let uri = format!("{UNIVERSE}/stations/{id}/?{PARAM}");
-        let station = self.client.get::<universe::Station>(uri).await?;
-        self.cache.lock().unwrap().insert(id, station.clone());
-
-        Ok(station)
+    pub async fn load<T>(&self, id: &Uid) -> anyhow::Result<T>
+    where
+        T: Uri + Debug + for<'de> Deserialize<'de>,
+    {
+        let uri = T::uri(id)?;
+        let object = self.client.get::<T>(uri).await?;
+        Ok(object)
     }
 
     pub async fn load_killmail<S: Into<String>>(
