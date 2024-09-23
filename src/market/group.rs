@@ -1,5 +1,19 @@
-use crate::universe::utils;
-use std::fmt;
+use crate::esi::api::Uid;
+use crate::esi::api::Uri;
+use crate::esi::client::MARKETS;
+use crate::esi::client::PARAM;
+
+use anyhow::anyhow;
+
+impl Uri for Group {
+    fn uri(id: &Uid) -> anyhow::Result<String> {
+        if let Uid::Id(id) = id {
+            Ok(format!("{MARKETS}/groups/{id}/?{PARAM}"))
+        } else {
+            Err(anyhow!("Expected Uid::Id(i32)"))
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Group {
@@ -9,13 +23,21 @@ pub struct Group {
     pub description: String,
     pub types: Vec<i32>,
 }
-impl fmt::Display for Group {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "{}: {}", self.market_group_id, self.name)?;
-        if let Some(parent_id) = self.parent_group_id {
-            writeln!(f, "Parent Group: {}", parent_id)?;
-        }
-        writeln!(f, "Description: {}", self.description)?;
-        utils::write("Types", &Some(self.types.clone()), f)
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::esi::EveApi;
+
+    #[tokio::test]
+    async fn load() -> anyhow::Result<()> {
+        let api = EveApi::new();
+        let obj = api.load::<Group>(&Uid::Id(4)).await?;
+        assert_eq!(obj.market_group_id, 4);
+        assert_eq!(obj.name, "Ships");
+        assert_eq!(obj.parent_group_id, None);
+        assert_eq!(obj.description, "Capsuleer spaceships of all sizes and roles, including advanced and faction variants of many hull types");
+        assert_eq!(obj.types, Vec::<i32>::new());
+        Ok(())
     }
 }

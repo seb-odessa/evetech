@@ -1,12 +1,13 @@
-use serde::{Deserialize, Serialize};
-use reqwest::{header, Client, RequestBuilder, StatusCode};
 use log::{debug, error};
+use reqwest::{header, Client, RequestBuilder, StatusCode};
+use serde::{Deserialize, Serialize};
 
-use crate::esi::ApiClient;
+use crate::{common, esi::ApiClient};
 
 use std::fmt::Debug;
 
 pub enum Uid {
+    Empty,
     Id(i32),
     Killmail(i32, String),
 }
@@ -31,6 +32,12 @@ impl EveApi {
     {
         let uri = T::uri(id)?;
         let object = self.get::<T>(uri).await?;
+        Ok(object)
+    }
+
+    pub async fn search(&self, names: &Vec<String>) -> anyhow::Result<common::SearchResult> {
+        let uri = common::SearchResult::uri(&Uid::Empty)?;
+        let object = self.post(uri, names).await?;
         Ok(object)
     }
 }

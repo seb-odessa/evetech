@@ -18,7 +18,6 @@ impl Uri for AsteroidBelt {
     }
 }
 
-
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct AsteroidBelt {
     pub name: String,

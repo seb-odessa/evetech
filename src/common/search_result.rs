@@ -1,4 +1,19 @@
-use std::fmt;
+use crate::esi::api::Uid;
+use crate::esi::api::Uri;
+use crate::esi::client::PARAM;
+use crate::esi::client::UNIVERSE;
+
+use anyhow::anyhow;
+
+impl Uri for SearchResult {
+    fn uri(id: &Uid) -> anyhow::Result<String> {
+        if let Uid::Empty = id {
+            Ok(format!("{UNIVERSE}/ids/?{PARAM}"))
+        } else {
+            Err(anyhow!("Expected Uid::Empty"))
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Object {
@@ -11,11 +26,6 @@ impl Object {
             id: id,
             name: name.into(),
         }
-    }
-}
-impl fmt::Display for Object {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: {}", self.id, self.name)
     }
 }
 
@@ -58,5 +68,36 @@ impl SearchResult {
             ItemType::Stations => self.agents.as_ref().and_then(|v| v.first().cloned()),
             ItemType::Systems => self.agents.as_ref().and_then(|v| v.first().cloned()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::esi::EveApi;
+
+    #[tokio::test]
+    async fn load() -> anyhow::Result<()> {
+        let api = EveApi::new();
+        let names = vec![String::from("Jovian Researcher")];
+        let obj = api.search(&names).await?;
+        let expected = SearchResult {
+            agents: None,
+            alliances: None,
+            characters: Some(vec![Object {
+                id: 2115657646,
+                name: String::from("Jovian Researcher"),
+            }]),
+            constellations: None,
+            corporations: None,
+            factions: None,
+            inventory_types: None,
+            regions: None,
+            stations: None,
+            systems: None,
+        };
+        assert_eq!(obj, expected);
+
+        Ok(())
     }
 }

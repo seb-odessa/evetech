@@ -33,6 +33,8 @@ mod tests {
     use crate::{common::Position, killmails::item::Item};
 
     use super::*;
+    use crate::esi::EveApi;
+
     const JSON: &str = r##"
     {
         "attackers": [
@@ -171,6 +173,16 @@ mod tests {
                 ])
             }
         );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn load() -> anyhow::Result<()> {
+        let api = EveApi::new();
+        let hash = String::from("9c01e82d5a65818c816a72e6bcc24dd045dde2f8");
+        let obj = api.load::<Killmail>(&Uid::Killmail(120480909, hash)).await?;
+        assert_eq!(obj.killmail_id, 120480909);
+        assert_eq!(obj.solar_system_id, 30004348);
         Ok(())
     }
 }
