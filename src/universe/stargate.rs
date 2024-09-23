@@ -11,7 +11,7 @@ use std::fmt;
 impl Uri for Stargate {
     fn uri(id: &Uid) -> anyhow::Result<String> {
         if let Uid::Id(id) = id {
-            Ok(format!("{UNIVERSE}/stations/{id}/?{PARAM}"))
+            Ok(format!("{UNIVERSE}/stargates/{id}/?{PARAM}"))
         } else {
             Err(anyhow!("Expected Uid::Id(i32)"))
         }
@@ -49,5 +49,21 @@ impl fmt::Display for StargateDestination {
             " Stargate Id: {} System Id: {}",
             self.stargate_id, self.system_id
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::esi::EveApi;
+
+    #[tokio::test]
+    async fn load() -> anyhow::Result<()> {
+        let api = EveApi::new();
+        let obj = api.load::<Stargate>(&Uid::Id(50011094)).await?;
+        assert_eq!(obj.stargate_id, 50011094);
+        assert_eq!(obj.system_id, 30002080);
+        assert_eq!(obj.name, "Stargate (Dudreda)");
+        Ok(())
     }
 }

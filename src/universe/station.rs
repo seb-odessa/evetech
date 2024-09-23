@@ -61,3 +61,19 @@ impl fmt::Display for Station {
         writeln!(f, "Type Id: {}", self.type_id)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::esi::EveApi;
+
+    #[tokio::test]
+    async fn load() -> anyhow::Result<()> {
+        let api = EveApi::new();
+        let obj = api.load::<Station>(&Uid::Id(60004528)).await?;
+        assert_eq!(obj.station_id, 60004528);
+        assert_eq!(obj.system_id, 30002080);
+        assert_eq!(obj.name, "Arifsdald III - Moon 10 - Krusual Tribe Bureau");
+        Ok(())
+    }
+}

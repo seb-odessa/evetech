@@ -1,6 +1,23 @@
-use std::fmt;
 use crate::common::Position;
 use crate::universe::utils;
+use crate::esi::api::Uid;
+use crate::esi::api::Uri;
+use crate::esi::client::PARAM;
+use crate::esi::client::UNIVERSE;
+
+use anyhow::anyhow;
+
+use std::fmt;
+
+impl Uri for System {
+    fn uri(id: &Uid) -> anyhow::Result<String> {
+        if let Uid::Id(id) = id {
+            Ok(format!("{UNIVERSE}/systems/{id}/?{PARAM}"))
+        } else {
+            Err(anyhow!("Expected Uid::Id(i32)"))
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct System {
@@ -49,5 +66,20 @@ impl fmt::Display for PlanetarySystem {
         utils::write("  Belts Ids", &self.asteroid_belts, f)?;
         utils::write("  Moons Ids", &self.moons, f)?;
         write!(f, "")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::esi::EveApi;
+
+    #[tokio::test]
+    async fn load() -> anyhow::Result<()> {
+        let api = EveApi::new();
+        let obj = api.load::<System>(&Uid::Id(30002080)).await?;
+        assert_eq!(obj.system_id, 30002080);
+        assert_eq!(obj.name, "Arifsdald");
+        Ok(())
     }
 }

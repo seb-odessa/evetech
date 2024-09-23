@@ -1,5 +1,21 @@
 use crate::universe::utils;
+use crate::esi::api::Uid;
+use crate::esi::api::Uri;
+use crate::esi::client::PARAM;
+use crate::esi::client::UNIVERSE;
 use std::fmt;
+
+use anyhow::anyhow;
+
+impl Uri for Type {
+    fn uri(id: &Uid) -> anyhow::Result<String> {
+        if let Uid::Id(id) = id {
+            Ok(format!("{UNIVERSE}/types/{id}/?{PARAM}"))
+        } else {
+            Err(anyhow!("Expected Uid::Id(i32)"))
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Type {
@@ -85,5 +101,22 @@ pub struct DogmaEffects {
 impl fmt::Display for DogmaEffects {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: {}", self.effect_id, self.is_default)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::esi::EveApi;
+
+    #[tokio::test]
+    async fn load() -> anyhow::Result<()> {
+        let api = EveApi::new();
+        let obj = api.load::<Type>(&Uid::Id(2502)).await?;
+        assert_eq!(obj.type_id, 2502);
+        assert_eq!(obj.name, "Minmatar Trade Post");
+        assert_eq!(obj.group_id, 15);
+        assert_eq!(obj.graphic_id, Some(1138));
+        Ok(())
     }
 }

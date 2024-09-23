@@ -1,5 +1,21 @@
+use crate::esi::api::Uid;
+use crate::esi::api::Uri;
+use crate::esi::client::PARAM;
+use crate::esi::client::UNIVERSE;
 use crate::universe::utils;
 use std::fmt;
+
+use anyhow::anyhow;
+
+impl Uri for Region {
+    fn uri(id: &Uid) -> anyhow::Result<String> {
+        if let Uid::Id(id) = id {
+            Ok(format!("{UNIVERSE}/regions/{id}/?{PARAM}"))
+        } else {
+            Err(anyhow!("Expected Uid::Id(i32)"))
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Region {
@@ -16,5 +32,19 @@ impl fmt::Display for Region {
             writeln!(f, "Description: {}", description)?;
         }
         write!(f, "")
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::esi::EveApi;
+
+    #[tokio::test]
+    async fn load() -> anyhow::Result<()> {
+        let api = EveApi::new();
+        let obj = api.load::<Region>(&Uid::Id(10000042)).await?;
+        assert_eq!(obj.region_id, 10000042);
+        assert_eq!(obj.name, "Metropolis");
+        Ok(())
     }
 }

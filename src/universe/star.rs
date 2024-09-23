@@ -1,4 +1,20 @@
+use crate::esi::api::Uid;
+use crate::esi::api::Uri;
+use crate::esi::client::PARAM;
+use crate::esi::client::UNIVERSE;
 use std::fmt;
+
+use anyhow::anyhow;
+
+impl Uri for Star {
+    fn uri(id: &Uid) -> anyhow::Result<String> {
+        if let Uid::Id(id) = id {
+            Ok(format!("{UNIVERSE}/stars/{id}/?{PARAM}"))
+        } else {
+            Err(anyhow!("Expected Uid::Id(i32)"))
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default, Eq)]
 pub struct Star {
@@ -19,5 +35,20 @@ impl fmt::Display for Star {
         writeln!(f, "Radius: {}", self.radius)?;
         writeln!(f, "type_id: {}", self.type_id)?;
         writeln!(f, "System Id: {}", self.solar_system_id)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::esi::EveApi;
+
+    #[tokio::test]
+    async fn load() -> anyhow::Result<()> {
+        let api = EveApi::new();
+        let obj = api.load::<Star>(&Uid::Id(40132801)).await?;
+        assert_eq!(obj.solar_system_id, 30002080);
+        assert_eq!(obj.name, "Arifsdald - Star");
+        Ok(())
     }
 }
