@@ -8,10 +8,10 @@ pub struct WayPoint {
     pub position: Position,
 }
 impl WayPoint {
-    pub fn new(id: i32, name: &String, position: &Position) -> Self {
+    pub fn new(id: i32, name: &str, position: &Position) -> Self {
         Self {
-            id: id,
-            name: name.clone(),
+            id,
+            name: name.to_string(),
             position: position.clone(),
         }
     }

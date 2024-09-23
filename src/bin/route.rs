@@ -132,9 +132,12 @@ async fn best_route(esc: &Client, id: i32, start: &WayPoint, _: &Mode) -> anyhow
             }
         }
 
-        route.build_best();
-        print(&route);
+        let mut idx: u32 = 1u32;
 
+        route.build_best();
+        print(&route, &mut idx);
+
+        idx = 1;
         let mut start = None;
         for id in route.complete() {
             if let Some(waypoint) = route.get(&id) {
@@ -143,7 +146,7 @@ async fn best_route(esc: &Client, id: i32, start: &WayPoint, _: &Mode) -> anyhow
                         route.set_departue(start);
                     }
                     route.build_best();
-                    print(&route);
+                    print(&route, &mut idx);
                 }
                 start = Some(waypoint.clone());
             }
@@ -153,10 +156,19 @@ async fn best_route(esc: &Client, id: i32, start: &WayPoint, _: &Mode) -> anyhow
     Ok(())
 }
 
-fn print(route: &Route) {
+fn print(route: &Route, idx: &mut u32) {
+    let mut skip = true;
     for id in route.complete() {
         if let Some(wp) = route.get(&id) {
-            println!("{}", wp);
+            if skip {
+                println!("   {}", wp);
+                skip = false;
+            } else {
+                println!("{:02} {}", idx, wp);
+                *idx += 1;
+            }
         }
     }
+    // println!("Total route length {:.0} Mm", route.len() / 1_000_000.0);
+    // println!();
 }
