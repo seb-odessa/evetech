@@ -3,10 +3,15 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::future::Future;
 
-pub mod client;
-pub use client::EveSwaggerClient;
 pub mod api;
 pub use api::EveApi;
+pub use api::Uid;
+
+pub const STATUS: &'static str = "https://esi.evetech.net/latest/status";
+pub const MARKETS: &'static str = "https://esi.evetech.net/latest/markets";
+pub const KILLMAILS: &'static str = "https://esi.evetech.net/latest/killmails";
+pub const UNIVERSE: &'static str = "https://esi.evetech.net/latest/universe";
+pub const PARAM: &'static str = "datasource=tranquility&language=en";
 
 
 pub trait ApiClient {
@@ -25,26 +30,4 @@ pub trait ApiClient {
     where
         I: Debug + for<'se> Serialize + Send,
         O: Debug + for<'de> Deserialize<'de>;
-}
-
-pub trait Searchable<T> {
-    type Output;
-    fn load<I>(&self, names: Vec<I>) -> impl Future<Output = anyhow::Result<Self::Output>> + Send
-    where
-        I: Debug + for<'se> Serialize + Send;
-}
-
-pub trait Loadable<T> {
-    type Output;
-    fn load(&self) -> impl Future<Output = anyhow::Result<Self::Output>> + Send;
-}
-
-pub trait LoadableById<T> {
-    type Output;
-    fn load(&self, id: i32) -> impl Future<Output = anyhow::Result<Self::Output>> + Send;
-}
-
-pub trait LoadableByIdAndHash<T> {
-    type Output;
-    fn load<S: Into<String>>(&self, id: i32, hash: S) -> impl Future<Output = anyhow::Result<Self::Output>> + Send;
 }

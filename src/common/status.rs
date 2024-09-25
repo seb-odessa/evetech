@@ -1,7 +1,7 @@
 use crate::esi::api::Uid;
 use crate::esi::api::Uri;
-use crate::esi::client::PARAM;
-use crate::esi::client::STATUS;
+use crate::esi::PARAM;
+use crate::esi::STATUS;
 
 use anyhow::anyhow;
 

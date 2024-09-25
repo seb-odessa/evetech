@@ -1,16 +1,14 @@
 use std::fmt;
 
-pub type Coord = f64;
-
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Position {
-    pub x: Coord,
-    pub y: Coord,
-    pub z: Coord,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 impl Position {
-    pub fn new(x: Coord, y: Coord, z: Coord) -> Self {
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
         Self { x, y, z }
     }
 

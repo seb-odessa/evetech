@@ -2,8 +2,8 @@
 use super::{attacker::Attacker, victim::Victim};
 use crate::esi::api::Uid;
 use crate::esi::api::Uri;
-use crate::esi::client::PARAM;
-use crate::esi::client::KILLMAILS;
+use crate::esi::PARAM;
+use crate::esi::KILLMAILS;
 
 use anyhow::anyhow;
 

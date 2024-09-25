@@ -1,4 +1,3 @@
-use super::position::Coord;
 use super::position::Position;
 use std::fmt;
 
@@ -6,9 +5,9 @@ use std::fmt;
 pub struct Vector {
     pub beg: Position,
     pub end: Position,
-    pub dx: Coord,
-    pub dy: Coord,
-    pub dz: Coord,
+    pub dx: f64,
+    pub dy: f64,
+    pub dz: f64,
 }
 
 impl Vector {

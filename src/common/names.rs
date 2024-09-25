@@ -1,15 +1,28 @@
-use std::fmt;
+use crate::esi::api::Uid;
+use crate::esi::api::Uri;
+use crate::esi::PARAM;
+use crate::esi::UNIVERSE;
+
+use anyhow::anyhow;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Names {
     pub id: i32,
     pub name: String,
-    pub category: Categories,
+    pub category: Category,
+}
+impl Uri for Names {
+    fn uri(id: &Uid) -> anyhow::Result<String> {
+        if let Uid::Empty = id {
+            Ok(format!("{UNIVERSE}/names/?{PARAM}"))
+        } else {
+            Err(anyhow!("Expected Uid::Empty"))
+        }
+    }
 }
 
-// #[serde(rename_all = "snake_case")]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub enum Categories {
+pub enum Category {
     #[serde(rename = "alliance")]
     Alliance,
     #[serde(rename = "character")]
@@ -27,11 +40,27 @@ pub enum Categories {
     #[serde(rename = "station")]
     Station,
     #[serde(rename = "faction")]
-    Faction
+    Faction,
 }
 
-impl fmt::Display for Names {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({}, {}, {:?})", self.id, self.name, self.category)
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::esi::EveApi;
+
+    #[tokio::test]
+    async fn load() -> anyhow::Result<()> {
+        let api = EveApi::new();
+        let ids = vec![21918];
+        let obj = api.names(&ids).await?;
+        let expected = vec![Names {
+            id: 21918,
+            name: String::from("Republic Fleet Phased Plasma L"),
+            category: Category::InventoryType,
+        }];
+
+        assert_eq!(obj, expected);
+
+        Ok(())
     }
 }

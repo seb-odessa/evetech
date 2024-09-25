@@ -35,6 +35,12 @@ impl EveApi {
         Ok(object)
     }
 
+    pub async fn names(&self, names: &Vec<i32>) -> anyhow::Result<Vec<common::Names>> {
+        let uri = common::Names::uri(&Uid::Empty)?;
+        let object = self.post(uri, names).await?;
+        Ok(object)
+    }
+
     pub async fn search(&self, names: &Vec<String>) -> anyhow::Result<common::SearchResult> {
         let uri = common::SearchResult::uri(&Uid::Empty)?;
         let object = self.post(uri, names).await?;

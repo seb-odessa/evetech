@@ -5,11 +5,9 @@ use serde::Deserialize;
 
 use evetech::apps::Route;
 use evetech::apps::WayPoint;
-use evetech::common;
 use evetech::common::Position;
-use evetech::esi::EveSwaggerClient as Client;
-use evetech::esi::LoadableById as ById;
-use evetech::esi::Searchable;
+use evetech::esi::EveApi;
+use evetech::esi::Uid;
 use evetech::universe;
 
 const USAGE: &'static str = "
@@ -52,25 +50,25 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn build_route(system: &String, mode: &Mode) -> anyhow::Result<()> {
-    let esc = Client::new();
-    let names = vec![system];
-    let sr = <Client as Searchable<common::SearchResult>>::load(&esc, names).await?;
+    let api = EveApi::new();
+    let names = vec![system.clone()];
+    let sr = api.search(&names).await?;
     if let Some(systems) = sr.systems {
         for obj in systems {
             let mut starts = Vec::new();
             println!("Solar System: '{}'", obj.name);
-            let system = <Client as ById<universe::System>>::load(&esc, obj.id).await?;
+            let system = api.load::<universe::System>(&Uid::Id(obj.id)).await?;
             println!("{}", system);
 
             if let Some(id) = system.star_id {
-                let star = <Client as ById<universe::Star>>::load(&esc, id).await?;
+                let star = api.load::<universe::Star>(&Uid::Id(id)).await?;
                 println!("{:3} - {}", 1 + starts.len(), star.name);
                 starts.push(WayPoint::new(id, &star.name, &Position::zero()));
             }
 
             if let Some(stations) = system.stations {
                 for id in stations {
-                    let station = <Client as ById<universe::Station>>::load(&esc, id).await?;
+                    let station = api.load::<universe::Station>(&Uid::Id(id)).await?;
                     println!("{:3} - {}", 1 + starts.len(), station.name);
                     starts.push(WayPoint::new(id, &station.name, &station.position));
                 }
@@ -78,7 +76,7 @@ async fn build_route(system: &String, mode: &Mode) -> anyhow::Result<()> {
 
             if let Some(stargates) = system.stargates {
                 for id in stargates {
-                    let stargate = <Client as ById<universe::Stargate>>::load(&esc, id).await?;
+                    let stargate = api.load::<universe::Stargate>(&Uid::Id(id)).await?;
                     println!("{:3} - {}", 1 + starts.len(), stargate.name);
                     starts.push(WayPoint::new(id, &stargate.name, &stargate.position));
                 }
@@ -101,22 +99,21 @@ async fn build_route(system: &String, mode: &Mode) -> anyhow::Result<()> {
                 let id = system.system_id;
                 let index = (selected - 1) as usize;
                 let start = &starts[index];
-                best_route(&esc, id, start, &mode).await?;
+                best_route(&api, id, start, &mode).await?;
             }
         }
     }
     Ok(())
 }
 
-async fn best_route(esc: &Client, id: i32, start: &WayPoint, _: &Mode) -> anyhow::Result<()> {
-    let system = <Client as ById<universe::System>>::load(&esc, id).await?;
+async fn best_route(api: &EveApi, id: i32, start: &WayPoint, _: &Mode) -> anyhow::Result<()> {
+    let system = api.load::<universe::System>(&Uid::Id(id)).await?;
     if let Some(planets) = system.planets {
         let mut route = Route::new(start.clone());
         let mut routes = HashMap::new();
         for planet in &planets {
             if let Some(belts) = &planet.asteroid_belts {
-                let planet =
-                    <Client as ById<universe::Planet>>::load(&esc, planet.planet_id).await?;
+                let planet = api.load::<universe::Planet>(&Uid::Id(planet.planet_id)).await?;
 
                 route.add(WayPoint::new(
                     planet.planet_id,
@@ -124,9 +121,11 @@ async fn best_route(esc: &Client, id: i32, start: &WayPoint, _: &Mode) -> anyhow
                     &planet.position,
                 ));
 
-                let subroute = routes.entry(planet.planet_id).or_insert(Route::new(start.clone()));
+                let subroute = routes
+                    .entry(planet.planet_id)
+                    .or_insert(Route::new(start.clone()));
                 for id in belts {
-                    let belt = <Client as ById<universe::AsteroidBelt>>::load(&esc, *id).await?;
+                    let belt = api.load::<universe::AsteroidBelt>(&Uid::Id(*id)).await?;
                     subroute.add(WayPoint::new(*id, &belt.name, &belt.position));
                 }
             }
