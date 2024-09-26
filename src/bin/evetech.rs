@@ -1,11 +1,13 @@
 use docopt::Docopt;
 use serde::{Deserialize, Serialize};
 
+use evetech::alliance;
+use evetech::character;
 use evetech::common;
+use evetech::corporation;
 use evetech::esi::api::Uid;
 use evetech::esi::api::Uri;
 use evetech::esi::EveApi;
-
 use evetech::market;
 use evetech::universe;
 
@@ -20,8 +22,10 @@ Usage:
     evetech names <ids>...
     evetech search [<search-cmd>] <ids>...
     evetech universe <universe-cmd> <ids>...
-    evetech universe (-h | --help)
     evetech market <market-cmd> <ids>...
+    evetech alliance <ids>...
+    evetech corporation <ids>...
+    evetech character <ids>...
     evetech (-h | --help)
     evetech --version
 
@@ -80,6 +84,10 @@ struct Args {
     cmd_universe: bool,
     cmd_market: bool,
 
+    cmd_alliance: bool,
+    cmd_corporation: bool,
+    cmd_character: bool,
+
     arg_search_cmd: Option<Search>,
     arg_universe_cmd: Option<Univesrse>,
     arg_market_cmd: Option<Market>,
@@ -94,7 +102,7 @@ async fn main() -> anyhow::Result<()> {
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
 
-    display(&args);
+    // display(&args);
 
     let api = EveApi::new();
     if args.cmd_status {
@@ -118,6 +126,18 @@ async fn main() -> anyhow::Result<()> {
             if let Some(cmd) = args.arg_market_cmd {
                 market(&api, &ids, &cmd).await?;
             }
+        }
+    } else if args.cmd_alliance {
+        if let Some(ids) = args.arg_ids {
+            print::<alliance::Alliance>(&api, &ids).await?;
+        }
+    } else if args.cmd_corporation {
+        if let Some(ids) = args.arg_ids {
+            print::<corporation::Corporation>(&api, &ids).await?;
+        }
+    } else if args.cmd_character {
+        if let Some(ids) = args.arg_ids {
+            print::<character::Character>(&api, &ids).await?;
         }
     }
 
@@ -225,10 +245,6 @@ where
         let type_id = TypeId::of::<T>();
         // if type_id == TypeId::of::<::Agent>() {
         // } else if type_id == TypeId::of::<::Faction>() {
-        // } else if type_id == TypeId::of::<::Alliance>() {
-        // } else if type_id == TypeId::of::<::Corporation>() {
-        // } else if type_id == TypeId::of::<::Character>() {
-        // }
 
         if type_id == TypeId::of::<universe::Constellation>() {
             if let Some(constellations) = search_result.constellations {
@@ -249,6 +265,18 @@ where
         } else if type_id == TypeId::of::<universe::Type>() {
             if let Some(inventory_types) = search_result.inventory_types {
                 ids.extend(inventory_types.into_iter().map(|obj| obj.id));
+            }
+        } else if type_id == TypeId::of::<alliance::Alliance>() {
+            if let Some(alliances) = search_result.alliances {
+                ids.extend(alliances.into_iter().map(|obj| obj.id));
+            }
+        } else if type_id == TypeId::of::<corporation::Corporation>() {
+            if let Some(corporations) = search_result.corporations {
+                ids.extend(corporations.into_iter().map(|obj| obj.id));
+            }
+        } else if type_id == TypeId::of::<character::Character>() {
+            if let Some(characters) = search_result.characters {
+                ids.extend(characters.into_iter().map(|obj| obj.id));
             }
         }
     }

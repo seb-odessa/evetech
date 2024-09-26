@@ -1,3 +1,10 @@
+use crate::esi::api::Uid;
+use crate::esi::api::Uri;
+use crate::esi::ALLIANCES;
+use crate::esi::PARAM;
+
+use anyhow::anyhow;
+
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct Alliance {
     pub creator_corporation_id: i32,
@@ -8,6 +15,16 @@ pub struct Alliance {
     pub name: String,
     pub ticker: String,
 }
+impl Uri for Alliance {
+    fn uri(id: &Uid) -> anyhow::Result<String> {
+        if let Uid::Id(id) = id {
+            Ok(format!("{ALLIANCES}/{id}/?{PARAM}"))
+        } else {
+            Err(anyhow!("Expected Uid::Id(i32)"))
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
