@@ -57,7 +57,7 @@
                     for (const object of data.characters) {
                         // console.log(object);
                         const name = object.name;
-                        
+
                         const character = await getObjectAsync('characters', object.id);
                         // console.log(character);
 
@@ -78,8 +78,8 @@
                             updateElement(name, 'alliance', alliLink);
                         }
 
-                        const battles = await requestBattleAsync('character', object.id);
-                        // console.log(battles);
+                        const battles = await requestShortReportAsync('character', object.id);
+                        console.log(battles);
 
                         updateElement(name, 'wins_count', makeParagraph(battles.wins.count));
                         updateElement(name, 'losses_count', makeParagraph(battles.losses.count));

@@ -26,6 +26,7 @@ async fn main() -> anyhow::Result<()> {
     handlebars.register_template_file("who", "./public/templates/who.html")?;
     handlebars.register_template_file("report", "./public/templates/report.html")?;
     handlebars.register_template_file("character", "./public/templates/character.html")?;
+    handlebars.register_template_file("corporation", "./public/templates/corporation.html")?;
 
     let context = web::Data::new(handlebars);
 
@@ -39,6 +40,7 @@ async fn main() -> anyhow::Result<()> {
             .service(who)
             .service(report)
             .service(character)
+            .service(corporation)
         // .service(report_by_id)
         // .service(lost_ships)
     })
@@ -74,6 +76,14 @@ async fn character(ctx: Context<'_>, args: web::Path<i32>) -> impl Responder {
 
     info!("/character/{id}/");
     Result::from(ctx.render("character", &Id::from(id)))
+}
+
+#[get("/corporation/{id}/")]
+async fn corporation(ctx: Context<'_>, args: web::Path<i32>) -> impl Responder {
+    let id = args.into_inner();
+
+    info!("/corporation/{id}/");
+    Result::from(ctx.render("corporation", &Id::from(id)))
 }
 
 /*

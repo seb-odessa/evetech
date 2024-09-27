@@ -1,6 +1,6 @@
 function zkbinfo() {
-    // return "http://185.87.51.139:8080/api";
-    return "http://localhost:8080/api";
+    return "http://185.87.51.139:8080/api";
+    // return "http://localhost:8080/api";
 }
 
 function esi() {
@@ -111,14 +111,108 @@ async function requestReportAsync(prefix, area, id, cmd) {
     return data.map(([id, count]) => ({ id, count }));
 }
 
-async function requestBattleAsync(area, id) {
+async function requestFriendlyAsync(object, subject, id) {
+    const url = zkbinfo() + '/friendly/' + object + '/for/' + subject + '/' + id;
+    const response = await fetch(url, methodGet());
+    if (!response.ok) {
+        console.log(`${response.status}: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data.map(([id, count]) => ({ id, count }));
+}
+
+async function requestEnemyAsync(object, subject, id) {
+    const url = zkbinfo() + '/enemy/' + object + '/for/' + subject + '/' + id;
+    const response = await fetch(url, methodGet());
+    if (!response.ok) {
+        console.log(`${response.status}: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data.map(([id, count]) => ({ id, count }));
+}
+
+async function requestNamesAsync(ids) {
+    const url = esi() + "/universe/names/" + params();
+    const response = await fetch(url, {
+        method: 'POST',
+        mode: 'cors',
+        cache: 'no-cache',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        redirect: 'follow',
+        referrerPolicy: 'no-referrer',
+        body: JSON.stringify(ids)
+    });
+    return await response.json();
+}
+
+async function getNames(ids) {
+    const unique = [...new Set(ids)];
+    const names = await requestNamesAsync(unique);
+    return names.reduce((acc, item) => {
+        acc[item.id] = item.name;
+        return acc;
+    }, {});
+}
+
+function buildRecords(items, names){
+    return items.sort((a, b) => b.count - a.count).map(item => ({
+        id: item.id,
+        name: names[item.id] || 'Unknown',
+        count: item.count
+    }));
+}
+
+function createTableHead(headers) {
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    var column = 0;
+    headers.forEach(headerText => {
+        const th = document.createElement('th');
+        th.textContent = headerText;
+        th.className = "column_header_" + (++column);
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    return thead;
+}
+
+function createTable(refference, data, rows = 10) {
+    const table = document.createElement('table');
+    table.appendChild(createTableHead(['Имя', 'Счёт']));
+
+    const tbody = document.createElement('tbody');
+    var rowCount = 0;
+    data.forEach(item => {
+        ++rowCount;
+        const row = document.createElement('tr');
+        if (rowCount > rows) {
+            row.className = "hidden";
+        }
+
+        const cellName = document.createElement('td');
+        const link = refference.replace('$(id)', item.id);
+        cellName.appendChild(makeAnchor(link, item.name));
+        cellName.className = 'allign_left';
+        row.appendChild(cellName);
+
+        const cellWins = document.createElement('td');
+        cellWins.textContent = item.count;
+        cellWins.className = 'allign_right';
+        row.appendChild(cellWins);
+
+        tbody.appendChild(row);
+    });
+
+    table.appendChild(tbody);
+    return table;
+}
+
+async function requestShortReportAsync(area, id) {
     const report = {};
     report.wins = await requestTotalAsync('wins', area, id);
-    report.wins_sips = await requestReportAsync('wins', area, id, 'ships');
-    report.wins_systems = await requestReportAsync('wins', area, id, 'systems');
     report.losses = await requestTotalAsync('losses', area, id);
-    report.losses_sips = await requestReportAsync('losses', area, id, 'ships');
-    report.losses_systems = await requestReportAsync('losses', area, id, 'systems');
 
     const total_count = report.wins.count + report.losses.count;
     if (total_count > 0) {
@@ -135,3 +229,46 @@ async function requestBattleAsync(area, id) {
     return report;
 }
 
+async function requestShipReportAsync(area, id) {
+    const report = {};
+    const win_ships = await requestReportAsync('wins', area, id, 'ships');
+    const lost_ships = await requestReportAsync('losses', area, id, 'ships');
+    const ship_names = await getNames(win_ships.concat(lost_ships).map(item => item.id));
+    report.win_ships = buildRecords(win_ships, ship_names);
+    report.lost_ships = buildRecords(lost_ships, ship_names);
+    return report;
+}
+
+async function requestSystemReportAsync(area, id) {
+    const report = {};
+    const win_systems = await requestReportAsync('wins', area, id, 'systems');
+    const lost_systems = await requestReportAsync('losses', area, id, 'systems');
+    const system_names = await getNames(win_systems.concat(lost_systems).map(item => item.id));
+    report.win_systems = buildRecords(win_systems, system_names);
+    report.lost_systems = buildRecords(lost_systems, system_names);
+    return report;
+}
+
+async function requestFriendsAndEnemyAsync(object, subject, id) {
+    const report = {};
+
+    const friends = await requestFriendlyAsync(object, subject, id);
+    const enemy = await requestEnemyAsync(object, subject, id);
+    const names = await getNames(friends.concat(enemy).map(item => item.id));
+    report.friends = buildRecords(friends, names);
+    report.enemy = buildRecords(enemy, names);
+
+    // const friendly_corps = await requestFriendlyAsync("corporation", "character", id);
+    // const enemy_corps = await requestEnemyAsync("corporation", "character", id);
+    // const corp_names = await getNames(friendly_corps.concat(enemy_corps).map(item => item.id));
+    // report.friendly_corps = buildRecords(friendly_corps, corp_names);
+    // report.enemy_corps = buildRecords(enemy_corps, corp_names);
+
+    // const friendly_allis = await requestFriendlyAsync("alliance", "character", id);
+    // const enemy_allis = await requestEnemyAsync("alliance", "character", id);
+    // const alli_names = await getNames(friendly_allis.concat(enemy_allis).map(item => item.id));
+    // report.friendly_allis = buildRecords(friendly_allis, alli_names);
+    // report.enemy_allis = buildRecords(enemy_allis, alli_names);
+
+    return report;
+}
