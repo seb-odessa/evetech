@@ -54,28 +54,20 @@ async fn main() -> anyhow::Result<()> {
             for key in ids {
                 map.remove(&key);
             }
+            info!("Need to get {} killmails from zkillboard.com", map.len());
 
             for (id, hash) in map {
-                info!("{id} -> {hash}");
-                let uid = Uid::Killmail(id, hash);
+                let uid = Uid::Killmail(id, hash.clone());
                 if let Ok(killmail) = api.load::<Killmail>(&uid).await {
-                    client
-                        .post(&zkbinfo_save_api)
-                        .json(&killmail)
-                        .send()
-                        .await?;
+                    post(&client, &killmail, &zkbinfo_save_api).await?;
                 } else {
-                    println!();
-                    for _ in 0..10 {
-                        print!(".");
-                        thread::sleep(Duration::from_secs(1));
-                    }
-                    if let Ok(killmail) = api.load::<Killmail>(&uid).await {
-                        client
-                            .post(&zkbinfo_save_api)
-                            .json(&killmail)
-                            .send()
-                            .await?;
+                    for i in 1..7 {
+                        info!("Retry {i} for {{ {id} {hash} }}");
+                        thread::sleep(Duration::from_secs(3));
+                        if let Ok(killmail) = api.load::<Killmail>(&uid).await {
+                            post(&client, &killmail, &zkbinfo_save_api).await?;
+                            break;
+                        }
                     }
                 }
             }
@@ -83,6 +75,12 @@ async fn main() -> anyhow::Result<()> {
     } else {
         usage(&args[0])
     }
+    Ok(())
+}
+
+async fn post(client: &reqwest::Client, killmail: &Killmail, api: &String) -> anyhow::Result<()> {
+    client.post(api).json(&killmail).send().await?;
+    info!("{} -> {}", killmail.killmail_id, killmail.killmail_time);
     Ok(())
 }
 

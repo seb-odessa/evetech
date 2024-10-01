@@ -39,7 +39,7 @@ impl Api {
 
     pub fn save(&mut self, killmail: &killmails::killmail::Killmail) -> anyhow::Result<i32> {
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 conn.transaction::<_, _, _>(|conn| {
@@ -62,7 +62,7 @@ impl Api {
 
     pub fn load(&mut self, id: i32) -> anyhow::Result<killmails::killmail::Killmail> {
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 let killmail = schema::killmails::table
@@ -99,7 +99,7 @@ impl Api {
 
         let pattern = format!("date('now', '-{days} day')");
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 diesel::delete(
@@ -114,7 +114,7 @@ impl Api {
         use diesel::sql_query;
 
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 sql_query("DELETE FROM attackers WHERE killmail_id NOT IN (SELECT killmail_id FROM killmails)")
@@ -127,7 +127,7 @@ impl Api {
         use diesel::sql_query;
 
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 sql_query("DELETE FROM victims WHERE killmail_id NOT IN (SELECT killmail_id FROM killmails)")
@@ -141,7 +141,7 @@ impl Api {
 
         let pattern = format!("{}%", date.into());
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 killmails
@@ -175,7 +175,7 @@ impl Api {
         let count = count_star();
 
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 match rp {
@@ -247,7 +247,7 @@ impl Api {
 
         let count = count_star();
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 match rp {
@@ -300,7 +300,7 @@ impl Api {
         };
 
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 attackers::table
@@ -323,7 +323,7 @@ impl Api {
         };
 
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 attackers::table
@@ -350,7 +350,7 @@ impl Api {
         };
 
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 attackers::table
@@ -379,7 +379,7 @@ impl Api {
         };
 
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 victims::table
@@ -402,7 +402,7 @@ impl Api {
         };
 
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 victims::table
@@ -429,7 +429,7 @@ impl Api {
         };
 
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 victims::table
@@ -463,7 +463,7 @@ impl Api {
         };
 
         self.conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 victims::table
@@ -500,7 +500,7 @@ impl Api {
 
         let dates = self
             .conn
-            .try_lock()
+            .lock()
             .map_err(|e| anyhow::anyhow!("{e}"))
             .and_then(|mut conn| {
                 killmails::table
@@ -522,4 +522,3 @@ impl Api {
         Ok(hours)
     }
 }
-

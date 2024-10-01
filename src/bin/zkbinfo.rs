@@ -55,7 +55,7 @@ async fn main() -> anyhow::Result<()> {
         let mut interval = actix_rt::time::interval(Duration::from_secs(60 * 60 * cleanup_period));
         loop {
             interval.tick().await;
-            if let Ok(mut api) = ctx.api.try_lock() {
+            if let Ok(mut api) = ctx.api.lock() {
                 cleanup(&mut api, keep_days);
             }
         }
@@ -87,7 +87,7 @@ async fn main() -> anyhow::Result<()> {
                     .route(&report_total_route, web::get().to(report_total))
                     .route(&report_ships_route, web::get().to(report_ships))
                     .route(&report_systems_route, web::get().to(report_systems))
-                    .route(&report_lost_ships_route, web::get().to(lost_ships))
+                    .route(&report_lost_ships_route, web::get().to(lost_ships)),
             )
             .service(
                 web::scope("/killmail")
@@ -125,9 +125,10 @@ fn subject<S: Into<String>>(arg: S, id: i32) -> SubjectType {
 
 async fn report_total(ctx: Context, args: web::Path<(String, String, i32)>) -> impl Responder {
     let (rtype, subj, id) = args.into_inner();
+
     let result = ctx
         .api
-        .try_lock()
+        .lock()
         .map_err(|e| anyhow!("{e}"))
         .and_then(|mut api| match rtype.as_str() {
             "wins" => api.wins(subject(subj, id)),
@@ -143,7 +144,7 @@ async fn report_systems(ctx: Context, args: web::Path<(String, String, i32)>) ->
     let (rtype, subj, id) = args.into_inner();
     let result = ctx
         .api
-        .try_lock()
+        .lock()
         .map_err(|e| anyhow!("{e}"))
         .and_then(|mut api| match rtype.as_str() {
             "wins" => api.wins_systems(subject(subj, id)),
@@ -159,7 +160,7 @@ async fn report_ships(ctx: Context, args: web::Path<(String, String, i32)>) -> i
     let (rtype, subj, id) = args.into_inner();
     let result = ctx
         .api
-        .try_lock()
+        .lock()
         .map_err(|e| anyhow!("{e}"))
         .and_then(|mut api| match rtype.as_str() {
             "wins" => api.wins_ships(subject(subj, id)),
@@ -171,12 +172,11 @@ async fn report_ships(ctx: Context, args: web::Path<(String, String, i32)>) -> i
     Result::from(result)
 }
 
-
 async fn friends(ctx: Context, args: web::Path<(String, String, i32)>) -> impl Responder {
     let (obj, subj, id) = args.into_inner();
     let result = ctx
         .api
-        .try_lock()
+        .lock()
         .map_err(|e| anyhow!("{e}"))
         .and_then(|mut api| api.friends(subject(subj, id), object(obj)))
         .map_err(|e| anyhow!("{e}"));
@@ -188,7 +188,7 @@ async fn enemies(ctx: Context, args: web::Path<(String, String, i32)>) -> impl R
     let (obj, subj, id) = args.into_inner();
     let result = ctx
         .api
-        .try_lock()
+        .lock()
         .map_err(|e| anyhow!("{e}"))
         .and_then(|mut api| api.enemies(subject(subj, id), object(obj)))
         .map_err(|e| anyhow!("{e}"));
@@ -201,7 +201,7 @@ async fn ids_by_date(ctx: Context, args: web::Path<String>) -> impl Responder {
 
     let result = ctx
         .api
-        .try_lock()
+        .lock()
         .map_err(|e| anyhow!("{e}"))
         .and_then(|mut api| api.ids_by_date(date))
         .map_err(|e| anyhow!("{e}"));
@@ -213,7 +213,7 @@ async fn lost_ships(ctx: Context, args: web::Path<(i32, String, i32)>) -> impl R
     let (sid, subj, id) = args.into_inner();
     let result = ctx
         .api
-        .try_lock()
+        .lock()
         .map_err(|e| anyhow!("{e}"))
         .and_then(|mut api| api.lost_ships(subject(subj, id), sid))
         .map_err(|e| anyhow!("{e}"));
@@ -226,7 +226,7 @@ async fn save(ctx: Context, json: String) -> impl Responder {
         .map_err(|e| anyhow!("{e}"))
         .and_then(|killmail| {
             ctx.api
-                .try_lock()
+                .lock()
                 .map_err(|e| anyhow!("{e}"))
                 .and_then(|mut api| api.save(&killmail))
         });
