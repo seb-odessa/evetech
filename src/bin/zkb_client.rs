@@ -30,12 +30,12 @@ impl Handler {
     async fn text(
         &mut self,
         payload: &String,
-        continuation: bool,
+        _continuation: bool,
         fin: bool,
     ) -> anyhow::Result<()> {
         self.payloads.push(payload.clone());
 
-        if !continuation || fin {
+        if fin {
             let json = self.payloads.join("");
             self.payloads.clear();
 
@@ -44,17 +44,16 @@ impl Handler {
                     self.save(&killmail).await?;
                 }
                 Err(what) => {
-                    error!(": {what}");
+                    error!("{what} {json}");
                 }
             }
         }
-
         Ok(())
     }
 
     async fn save(&self, killmail: &Killmail) -> anyhow::Result<()> {
         info!(
-            "killmail_id: {} {} {}",
+            "id: {} system: {} timestamp: {}",
             killmail.killmail_id, killmail.solar_system_id, killmail.killmail_time
         );
 
