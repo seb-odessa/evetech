@@ -6,3 +6,4 @@ SCRIPTS="scripts start.sh stop.sh watchdog.sh"
 
 rsync -urP $SCRIPTS vps:~/zkbinfo/
 rsync -uP $BINARIES vps:~/zkbinfo/bin/
+rsync -urP public vps:~/zkbinfo/

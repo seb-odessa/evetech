@@ -150,16 +150,18 @@ async function requestNamesAsync(ids) {
 async function getNames(ids) {
     const unique = [...new Set(ids)];
     const names = await requestNamesAsync(unique);
-    return names.reduce((acc, item) => {
-        acc[item.id] = item.name;
-        return acc;
-    }, {});
+    return names
+        .filter(item => item.id != 0)
+        .reduce((acc, item) => {
+            acc[item.id] = item.name;
+            return acc;
+        }, {});
 }
 
-function buildRecords(items, names){
+function buildRecords(items, names) {
     return items.sort((a, b) => b.count - a.count).map(item => ({
         id: item.id,
-        name: names[item.id] || 'Unknown',
+        name: names[item.id] || '~Unknown~',
         count: item.count
     }));
 }

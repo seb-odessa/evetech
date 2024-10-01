@@ -13,7 +13,7 @@ fi
 
 if ! pgrep -f "$ZKB_CLI" > /dev/null; then
   echo "$(date): Процесс $ZKB_CLI не найден. Запускаем..."
-  $CMD
+  $ZKB_CLI
 else
   echo "$(date): Процесс $ZKB_CLI уже запущен."
 fi

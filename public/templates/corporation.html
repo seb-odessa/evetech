@@ -73,7 +73,7 @@
         async function updateContent(id) {
             try {
                 const corporation = await getObjectAsync('corporations', id);
-                console.log(corporation);
+                // console.log(corporation);
 
                 document.title = corporation.name;
                 const corp_name = corporation.name + " [" + corporation.ticker + "]";
@@ -81,7 +81,7 @@
 
                 if (corporation.alliance_id !== undefined) {
                     const alliance = await getObjectAsync('alliances', corporation.alliance_id);
-                    console.log(alliance);
+                    // console.log(alliance);
 
                     document.querySelectorAll('#alliance a').forEach(anchor => {
                         anchor.href = anchor.href.replace('$(alliance_id)', corporation.alliance_id);
@@ -123,7 +123,7 @@
                 {
                     const link = "https://zkillboard.com/ship/$(id)/";
                     const report = await requestShipReportAsync('corporation', id);
-                    console.log(report);
+                    // console.log(report);
                     document.getElementById('win_ships').appendChild(createTable(link, report.win_ships));
                     document.getElementById('lost_ships').appendChild(createTable(link, report.lost_ships));
                 }
