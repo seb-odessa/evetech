@@ -7,12 +7,17 @@ use evetech::killmails::killmail::Killmail;
 
 use std::env;
 
-struct Processor {
+pub enum HandleResult {
+    Ok,
+    Close,
+}
+
+struct Handler {
     api: String,
     client: reqwest::Client,
     payloads: Vec<String>,
 }
-impl Processor {
+impl Handler {
     pub fn new(host: &String, port: u16) -> Self {
         let api = format!("http://{host}:{port}/killmail/save");
         Self {
@@ -20,38 +25,6 @@ impl Processor {
             client: reqwest::Client::new(),
             payloads: Vec::new(),
         }
-    }
-
-    pub async fn handle(&mut self, frame: Frame) -> anyhow::Result<()> {
-        match frame {
-            Frame::Text {
-                payload,
-                continuation,
-                fin,
-            } => {
-                let len = payload.len();
-                info!("Frame::Text {{ {len}, {continuation}, {fin} }}",);
-                self.text(&payload, continuation, fin).await?
-            }
-            Frame::Binary {
-                payload,
-                continuation,
-                fin,
-            } => {
-                let len = payload.len();
-                info!("Frame::Binary {{ {len}, {continuation}, {fin} }}",);
-            }
-            Frame::Ping { payload } => {
-                info!("Frame::Ping {{ {:?} }}", payload);
-            }
-            Frame::Pong { payload } => {
-                info!("Frame::Ping {{ {:?} }}", payload);
-            }
-            Frame::Close { payload } => {
-                info!("Frame::Ping {{ {:?} }}", payload);
-            }
-        };
-        Ok(())
     }
 
     async fn text(
@@ -93,6 +66,42 @@ impl Processor {
 
         Ok(())
     }
+
+    async fn handle(&mut self, frame: Frame) -> anyhow::Result<HandleResult> {
+        match frame {
+            Frame::Text {
+                payload,
+                continuation,
+                fin,
+            } => {
+                let len = payload.len();
+                info!("Frame::Text {{ {len}, {continuation}, {fin} }}",);
+                self.text(&payload, continuation, fin).await?;
+                Ok(HandleResult::Ok)
+            }
+            Frame::Binary {
+                payload,
+                continuation,
+                fin,
+            } => {
+                let len = payload.len();
+                info!("Frame::Binary {{ {len}, {continuation}, {fin} }}",);
+                Ok(HandleResult::Ok)
+            }
+            Frame::Ping { payload } => {
+                info!("Frame::Ping {{ {:?} }}", payload);
+                Ok(HandleResult::Ok)
+            }
+            Frame::Pong { payload } => {
+                info!("Frame::Ping {{ {:?} }}", payload);
+                Ok(HandleResult::Ok)
+            }
+            Frame::Close { payload } => {
+                info!("Frame::Ping {{ {:?} }}", payload);
+                Ok(HandleResult::Close)
+            }
+        }
+    }
 }
 
 #[tokio::main]
@@ -107,7 +116,7 @@ async fn main() -> anyhow::Result<()> {
     let api = format!("http://{host}:{port}/killmail/save");
     info!("zkbinfo API url: {api}");
 
-    let mut handler = Processor::new(&host, port);
+    let mut handler = Handler::new(&host, port);
     info!("Handler created");
 
     let wss = "wss://zkillboard.com/websocket/";
@@ -119,6 +128,9 @@ async fn main() -> anyhow::Result<()> {
     info!("Web Socket request sent");
     loop {
         let frame = ws.receive().await?;
-        handler.handle(frame).await?
+        if let Ok(HandleResult::Close) = handler.handle(frame).await {
+            break;
+        }
     }
+    Ok(())
 }
