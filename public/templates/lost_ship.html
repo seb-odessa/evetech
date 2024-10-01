@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>{{sid}} {{id}}</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <script type="text/javascript" src="/js/script.js"></script>
+    <div class="content">
+        <h3 id="header">Lost ships</h3>
+        <div id="lost_ships"></div>
+
+        <script>
+            function getUniqueValuesFromField(data, field) {
+                return [...new Set(data.map(item => item[field]))];
+            }
+
+            function createTable(data, names) {
+                const table = document.createElement('table');
+                table.appendChild(createTableHead(['Killmail', 'Character', 'Corporation', 'Alliance', 'Ship', 'Damage', 'Solar Sysyem', 'Time']));
+
+                const tbody = document.createElement('tbody');
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+
+                    row.appendChild(createCell(zkb('kill', item.id), item.id, 'allign_right'));
+                    row.appendChild(createCell(`/character/${item.char}/`, names[item.char], 'allign_left'));
+                    row.appendChild(createCell(`/corporation/${item.corp}/`, names[item.corp], 'allign_left'));
+                    row.appendChild(createCell(`/alliance/${item.alli}/`, names[item.alli], 'allign_left'));
+                    row.appendChild(createCell(zkb('ship', item.ship), names[item.ship], 'allign_left'));
+                    row.appendChild(createCell(undefined, item.dmg, 'allign_right'));
+                    row.appendChild(createCell(zkb('system', item.system), names[item.system], 'allign_left'));
+                    row.appendChild(createCell(undefined, formatDate(item.time), 'allign_right'));
+
+                    tbody.appendChild(row);
+                });
+
+                table.appendChild(tbody);
+                return table;
+            }
+
+            async function updateContent(sid, id) {
+                try {
+                    const sid = Number(`{{sid}}`);
+                    const subject = `{{subject}}`;
+                    const id = Number(`{{id}}`);
+
+                    const data = await requestLostAsync(sid, subject, id);
+                    console.log(data);
+
+                    const chars = getUniqueValuesFromField(data, 'char');
+                    const corps = getUniqueValuesFromField(data, 'corp');
+                    const allis = getUniqueValuesFromField(data, 'alli');
+                    const ships = getUniqueValuesFromField(data, 'ship');
+                    const systems = getUniqueValuesFromField(data, 'system');
+                    let ids = [...chars, ...corps, ...allis, ...ships, ...systems];
+                    let names = await getNames([...new Set(ids)]);
+                    console.log(names);
+
+                    const title = `The losts of '${names[sid]}' by '${names[id]}'`;
+                    document.title = title;
+                    document.getElementById('header').textContent = title;
+                    document.getElementById('lost_ships').appendChild(createTable(data, names));
+
+                } catch (error) {
+                    console.log(error.message);
+                }
+            }
+
+            updateContent();
+        </script>
+    </div>
+
+    <div align='center'>
+        <a href="/gui/who/">Home</a>
+    </div>
+
+</body>
+
+</html>

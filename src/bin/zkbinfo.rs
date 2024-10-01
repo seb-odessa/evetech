@@ -39,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
     let port = env::<u16>("ZKBINFO_PORT", 8080);
     info!("The ZKBINFO port: {port}");
 
-    let keep_days: u16 = env::<u16>("ZKBINFO_DAYS", 60);
+    let keep_days: u16 = env::<u16>("ZKBINFO_DAYS", 90);
     info!("The ZKBINFO keep days: {keep_days}");
 
     let cleanup_period: u64 = env::<u64>("ZKBINFO_PERIOD", 4);
@@ -69,6 +69,7 @@ async fn main() -> anyhow::Result<()> {
     let report_total_route = format!("/{{rtype:{result}}}/{{subject:{allowed}}}/{{id}}");
     let report_ships_route = format!("/{{rtype:{result}}}/{{subject:{allowed}}}/{{id}}/ships");
     let report_systems_route = format!("/{{rtype:{result}}}/{{subject:{allowed}}}/{{id}}/systems");
+    let report_lost_ships_route = format!("/lost/ship/{{sid}}/{{subject:{allowed}}}/{{id}}");
 
     HttpServer::new(move || {
         App::new()
@@ -86,6 +87,7 @@ async fn main() -> anyhow::Result<()> {
                     .route(&report_total_route, web::get().to(report_total))
                     .route(&report_ships_route, web::get().to(report_ships))
                     .route(&report_systems_route, web::get().to(report_systems))
+                    .route(&report_lost_ships_route, web::get().to(lost_ships))
             )
             .service(
                 web::scope("/killmail")
@@ -207,6 +209,18 @@ async fn ids_by_date(ctx: Context, args: web::Path<String>) -> impl Responder {
     Result::from(result)
 }
 
+async fn lost_ships(ctx: Context, args: web::Path<(i32, String, i32)>) -> impl Responder {
+    let (sid, subj, id) = args.into_inner();
+    let result = ctx
+        .api
+        .try_lock()
+        .map_err(|e| anyhow!("{e}"))
+        .and_then(|mut api| api.lost_ships(subject(subj, id), sid))
+        .map_err(|e| anyhow!("{e}"));
+
+    Result::from(result)
+}
+
 async fn save(ctx: Context, json: String) -> impl Responder {
     let result = serde_json::from_str::<evetech::killmails::Killmail>(&json)
         .map_err(|e| anyhow!("{e}"))
@@ -259,6 +273,17 @@ impl From<anyhow::Result<Vec<(i32, i64)>>> for Result {
 }
 impl From<anyhow::Result<(i64, Option<i64>)>> for Result {
     fn from(result: anyhow::Result<(i64, Option<i64>)>) -> Self {
+        match result {
+            Ok(ids) => match serde_json::to_string(&ids) {
+                Ok(json) => Self::from(json),
+                Err(err) => Self::from(anyhow!("{err}")),
+            },
+            Err(err) => Self::from(err),
+        }
+    }
+}
+impl From<anyhow::Result<Vec<(i32, i32, i32, i32, i32, i32, i32, String)>>> for Result {
+    fn from(result: anyhow::Result<Vec<(i32, i32, i32, i32, i32, i32, i32, String)>>) -> Self {
         match result {
             Ok(ids) => match serde_json::to_string(&ids) {
                 Ok(json) => Self::from(json),

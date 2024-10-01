@@ -7,6 +7,10 @@ function esi() {
     return "https://esi.evetech.net/latest";
 }
 
+function zkb(area, id) {
+    return 'https://zkillboard.com/' + area + '/' + id + '/';
+}
+
 function params() {
     return "?datasource=tranquility";
 }
@@ -131,6 +135,27 @@ async function requestEnemyAsync(object, subject, id) {
     return data.map(([id, count]) => ({ id, count }));
 }
 
+function formatDate(iso) {
+    const date = new Date(iso);
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
+async function requestLostAsync(sid, subject, id) {
+    const url = zkbinfo() + `/lost/ship/${sid}/${subject}/${id}`;
+    const response = await fetch(url, methodGet());
+    if (!response.ok) {
+        console.log(`${response.status}: ${response.statusText}`);
+    }
+    const data = await response.json();
+
+    return data.map(([id, char, corp, alli, ship, dmg, system, time]) => ({ id, char, corp, alli, ship, dmg, system, time }));
+}
+
 async function requestNamesAsync(ids) {
     const url = esi() + "/universe/names/" + params();
     const response = await fetch(url, {
@@ -166,14 +191,25 @@ function buildRecords(items, names) {
     }));
 }
 
-function createTableHead(headers) {
+function createCell(link, text, cn) {
+    const cell = document.createElement('td');
+    if (link) {
+        cell.appendChild(makeAnchor(link, text));
+    } else {
+        cell.textContent = text;
+    }
+    cell.className = cn;
+    return cell;
+}
+
+function createTableHead(headers, cnp) {
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
     var column = 0;
     headers.forEach(headerText => {
         const th = document.createElement('th');
         th.textContent = headerText;
-        th.className = "column_header_" + (++column);
+        th.className = cnp + (++column);
         headerRow.appendChild(th);
     });
     thead.appendChild(headerRow);
@@ -182,7 +218,7 @@ function createTableHead(headers) {
 
 function createTable(refference, data, rows = 10) {
     const table = document.createElement('table');
-    table.appendChild(createTableHead(['Имя', 'Счёт']));
+    table.appendChild(createTableHead(['Имя', 'Счёт'], "column_header_"));
 
     const tbody = document.createElement('tbody');
     var rowCount = 0;
@@ -259,18 +295,6 @@ async function requestFriendsAndEnemyAsync(object, subject, id) {
     const names = await getNames(friends.concat(enemy).map(item => item.id));
     report.friends = buildRecords(friends, names);
     report.enemy = buildRecords(enemy, names);
-
-    // const friendly_corps = await requestFriendlyAsync("corporation", "character", id);
-    // const enemy_corps = await requestEnemyAsync("corporation", "character", id);
-    // const corp_names = await getNames(friendly_corps.concat(enemy_corps).map(item => item.id));
-    // report.friendly_corps = buildRecords(friendly_corps, corp_names);
-    // report.enemy_corps = buildRecords(enemy_corps, corp_names);
-
-    // const friendly_allis = await requestFriendlyAsync("alliance", "character", id);
-    // const enemy_allis = await requestEnemyAsync("alliance", "character", id);
-    // const alli_names = await getNames(friendly_allis.concat(enemy_allis).map(item => item.id));
-    // report.friendly_allis = buildRecords(friendly_allis, alli_names);
-    // report.enemy_allis = buildRecords(enemy_allis, alli_names);
 
     return report;
 }

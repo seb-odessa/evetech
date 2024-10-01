@@ -27,6 +27,7 @@ async fn main() -> anyhow::Result<()> {
     handlebars.register_template_file("report", "./public/templates/report.html")?;
     handlebars.register_template_file("character", "./public/templates/character.html")?;
     handlebars.register_template_file("corporation", "./public/templates/corporation.html")?;
+    handlebars.register_template_file("lost_ship", "./public/templates/lost_ship.html")?;
 
     let context = web::Data::new(handlebars);
 
@@ -41,8 +42,9 @@ async fn main() -> anyhow::Result<()> {
             .service(report)
             .service(character)
             .service(corporation)
-        // .service(report_by_id)
-        // .service(lost_ships)
+            .service(character_lost_ships)
+            .service(corporation_lost_ships)
+            .service(alliance_lost_ships)
     })
     .workers(2)
     .bind((host.as_str(), port))?
@@ -86,92 +88,37 @@ async fn corporation(ctx: Context<'_>, args: web::Path<i32>) -> impl Responder {
     Result::from(ctx.render("corporation", &Id::from(id)))
 }
 
-/*
-#[get("/gui/{target}/{name}/")]
-async fn report(ctx: Context<'_>, path: web::Path<(String, String)>) -> HttpResponse {
-    let (target, name) = path.into_inner();
-    let body = match target.as_str() {
-        "character" => match CharacterProps::named(name).await {
-            Ok(prop) => wrapper(ctx, "character", &prop),
-            Err(err) => wrapper(ctx, "error", &Error::from(format!("{err}"))),
-        },
-        "corporation" => match CorporationProps::named(name).await {
-            Ok(prop) => wrapper(ctx, "corporation", &prop),
-            Err(err) => wrapper(ctx, "error", &Error::from(format!("{err}"))),
-        },
-        "alliance" => match AllianceProps::named(name).await {
-            Ok(prop) => wrapper(ctx, "alliance", &prop),
-            Err(err) => wrapper(ctx, "error", &Error::from(format!("{err}"))),
-        },
-        _ => wrapper(ctx, "error", &Error::from(format!("Unknown Target"))),
-    };
-    HttpResponse::Ok().body(body)
-}
+// #[get("/alliance/{id}/")]
+// async fn alliance(ctx: Context<'_>, args: web::Path<i32>) -> impl Responder {
+//     let id = args.into_inner();
 
-#[get("/gui/{target}/id/{id}/")]
-async fn report_by_id(ctx: Context<'_>, path: web::Path<(String, i32)>) -> HttpResponse {
-    let (target, id) = path.into_inner();
-    let body = match target.as_str() {
-        "character" => match CharacterProps::from(id).await {
-            Ok(prop) => wrapper(ctx, "character", &prop),
-            Err(err) => wrapper(ctx, "error", &Error::from(format!("{err}"))),
-        },
-        "corporation" => match CorporationProps::from(id).await {
-            Ok(prop) => wrapper(ctx, "corporation", &prop),
-            Err(err) => wrapper(ctx, "error", &Error::from(format!("{err}"))),
-        },
-        "alliance" => match AllianceProps::from(id).await {
-            Ok(prop) => wrapper(ctx, "alliance", &prop),
-            Err(err) => wrapper(ctx, "error", &Error::from(format!("{err}"))),
-        },
-        _ => wrapper(ctx, "error", &Error::from(format!("Unknown Target"))),
-    };
-    HttpResponse::Ok().body(body)
-}
-
-#[get("/gui/{target}/{name}/lost/{ship}/")]
-async fn lost_ships(ctx: Context<'_>, path: web::Path<(String, i32, i32)>) -> HttpResponse {
-    let (target, id, ship_id) = path.into_inner();
-    let body = match target.as_str() {
-        "character" => match LostProps::from(id, ship_id, SearchCategory::Character).await {
-            Ok(prop) => wrapper(ctx, "losts", &prop),
-            Err(err) => wrapper(ctx, "error", &Error::from(format!("{err}"))),
-        },
-        "corporation" => match LostProps::from(id, ship_id, SearchCategory::Corporation).await {
-            Ok(prop) => wrapper(ctx, "losts", &prop),
-            Err(err) => wrapper(ctx, "error", &Error::from(format!("{err}"))),
-        },
-        "alliance" => match LostProps::from(id, ship_id, SearchCategory::Alliance).await {
-            Ok(prop) => wrapper(ctx, "losts", &prop),
-            Err(err) => wrapper(ctx, "error", &Error::from(format!("{err}"))),
-        },
-        _ => wrapper(ctx, "error", &Error::from(format!("Unknown Target"))),
-    };
-
-    HttpResponse::Ok().body(body)
-}
-
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
-struct Error {
-    error: String,
-}
-impl Error {
-    pub fn from(error: String) -> Self {
-        Error { error }
-    }
-}
-*/
-
-// fn wrapper<T: Serialize>(ctx: Context<'_>, template: &str, obj: &T) -> String {
-//     match ctx.render(template, &obj) {
-//         Ok(ok_body) => ok_body,
-//         Err(what) => {
-//             error!("{what}");
-//             format!("{what}")
-//         }
-//     }
+//     info!("/alliance/{id}/");
+//     Result::from(ctx.render("alliance", &Id::from(id)))
 // }
 
+#[get("/lost/ship/{sid}/character/{id}/")]
+async fn character_lost_ships(ctx: Context<'_>, args: web::Path<(i32, i32)>) -> impl Responder {
+    let (sid, id) = args.into_inner();
+
+    info!("/lost/ship/{sid}/character/{id}/");
+    Result::from(ctx.render("lost_ship", &Lost::from(sid, "character", id)))
+}
+
+#[get("/lost/ship/{sid}/corporation/{id}/")]
+async fn corporation_lost_ships(ctx: Context<'_>, args: web::Path<(i32, i32)>) -> impl Responder {
+    let (sid, id) = args.into_inner();
+
+    info!("/lost/ship/{sid}/corporation/{id}/");
+    Result::from(ctx.render("lost_ship", &Lost::from(sid, "corporation", id)))
+}
+
+#[get("/lost/ship/{sid}/alliance/{id}/")]
+async fn alliance_lost_ships(ctx: Context<'_>, args: web::Path<(i32, i32)>) -> impl Responder {
+    let (sid, id) = args.into_inner();
+
+    info!("/lost/ship/{sid}/alliance/{id}/");
+    Result::from(ctx.render("lost_ship", &Lost::from(sid, "alliance", id)))
+}
 pub struct Result {
     content: String,
 }
@@ -233,5 +180,21 @@ pub struct Id {
 impl Id {
     pub fn from(id: i32) -> Self {
         Self { id }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Lost {
+    sid: i32,
+    subject: String,
+    id: i32,
+}
+impl Lost {
+    pub fn from<S: Into<String>>(sid: i32, subject: S, id: i32) -> Self {
+        Self {
+            sid,
+            subject: subject.into(),
+            id,
+        }
     }
 }

@@ -70,31 +70,44 @@ table {
 tr.hidden {
     display: none;
 }
+
 table:hover tr.hidden {
     display: table-row;
 }
+
 .column_header_1 {
     width: 300px;
 }
+
 .column_header_2 {
     width: 50px;
 }
+
 .allign_left {
     text-align: left;
 }
+
 .allign_right {
     text-align: right;
 }
 
 .tables-container {
-    display: flex;               /* Flexbox для расположения таблиц в ряд */
-    gap: 20px;                   /* Расстояние между таблицами */
-    justify-content: flex-start; /* Выравнивание таблиц по левому краю */
+    display: flex;
+    /* Flexbox для расположения таблиц в ряд */
+    gap: 20px;
+    /* Расстояние между таблицами */
+    justify-content: flex-start;
+    /* Выравнивание таблиц по левому краю */
 }
+
 table {
     border-collapse: collapse;
 }
-th, td {
+
+th,
+td {
     border: 1px solid black;
-    /* padding: 8px; */
+    padding-left: 10px;
+    padding-right: 10px;
+    border: 1px solid black;
 }

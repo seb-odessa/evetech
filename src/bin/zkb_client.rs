@@ -121,7 +121,7 @@ async fn main() -> anyhow::Result<()> {
     let wss = "wss://zkillboard.com/websocket/";
     let enable = r#"{"action":"sub","channel":"killstream"}"#;
     let mut ws = WebSocket::connect(wss).await?;
-    info!("Web Socket {:?} created", ws);
+    info!("{:?}", ws);
 
     ws.send_text(enable.to_string()).await?;
     info!("Web Socket request sent");
