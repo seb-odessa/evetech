@@ -9,7 +9,6 @@
 <body>
     <script type="text/javascript" src="/js/script.js"></script>
     <div class="content">
-        <div class="hidden" id="id">{{id}}</div>
         <div id="portrait" class="portrait">
         </div>
         <div class="info">
@@ -69,12 +68,14 @@
     </div>
 
     <script>
-        async function updateContent(id) {
+        async function updateContent() {
             try {
+                const id = Number(`{{id}}`);
+                console.log('id: [' + id + ']');
+
                 const character = await getObjectAsync('characters', id);
                 // console.log(character);
 
-                document.title = character.name;
                 document.getElementById('char_name').innerText = character.name;
                 document.querySelectorAll('#corporation a').forEach(anchor => {
                     anchor.href = anchor.href.replace('$(corporation_id)', character.corporation_id);
@@ -82,7 +83,10 @@
 
                 const corporation = await getObjectAsync('corporations', character.corporation_id);
                 // console.log(corporation);
-                insertInto('corp_name', makeRef('corporation', character.corporation_id, corporation.name));
+
+                const corp_name = corporation.name + " [" + corporation.ticker + "]";
+                insertInto('corp_name', makeRef('corporation', id, corp_name));
+                document.title = character.name + ' - ' + corp_name;
 
                 if (character.alliance_id !== undefined) {
                     const alliance = await getObjectAsync('alliances', corporation.alliance_id);
@@ -91,7 +95,10 @@
                     document.querySelectorAll('#alliance a').forEach(anchor => {
                         anchor.href = anchor.href.replace('$(alliance_id)', character.corporation_id);
                     });
-                    insertInto('alli_name', makeRef('alliance', corporation.alliance_id, alliance.name));
+
+                    const alli_name = alliance.name + " [" + alliance.ticker + "]";
+                    insertInto('alli_name', makeRef('alliance', corporation.alliance_id, alli_name));
+                    document.title = document.title + ' - ' + alli_name;
 
                 } else {
                     const element = document.getElementById('alliance');
@@ -145,7 +152,7 @@
                     document.getElementById('enemy_corps').appendChild(createTable(link, report.enemy));
                 }
                 {
-                    const link = "https://zkillboard.com/alliance/$(id)/";
+                    const link = "/alliance/$(id)/";
                     const report = await requestFriendsAndEnemyAsync('alliance', 'character', id);
                     console.log(report);
                     document.getElementById('friendly_allis').appendChild(createTable(link, report.friends));
@@ -157,10 +164,7 @@
             }
         }
 
-        const id = {{ id }};
-        console.log('id: [' + id + ']');
-
-        updateContent(id);
+        updateContent();
     </script>
 
     <div align='center'>

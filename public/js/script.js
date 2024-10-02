@@ -19,6 +19,18 @@ function makeRef(path, id, name) {
     return makeAnchor('/' + path + '/' + id + '/', name);
 }
 
+function canUseFilter(arg) {
+    return arg != null && typeof arg.filter === 'function';
+}
+
+function canUseMap(arg) {
+    return arg != null && typeof arg.map === 'function';
+}
+
+function canUseReduce(arg) {
+    return arg != null && typeof arg.reduce === 'function';
+}
+
 function makeAnchor(link, name) {
     const anchor = document.createElement('a');
     anchor.href = link;
@@ -173,10 +185,25 @@ async function requestNamesAsync(ids) {
 }
 
 async function getNames(ids) {
+    ids = ids.filter(id => id != 0);
     const unique = [...new Set(ids)];
-    const names = await requestNamesAsync(unique);
+
+    const chunkSize = 100;
+    const chunks = [];
+    for (let i = 0; i < unique.length; i += chunkSize) {
+        chunks.push(unique.slice(i, i + chunkSize));
+    }
+
+    const names = (await Promise.all(chunks.map(chunk => requestNamesAsync(chunk)))).flat();
+
+    // let names = [];
+    // for (const chunk of chunks) {
+    //     const temp = await requestNamesAsync(chunk);
+    //     names = names.concat(temp);
+    // }
+
+    // const names = await requestNamesAsync(unique);
     return names
-        .filter(item => item.id != 0)
         .reduce((acc, item) => {
             acc[item.id] = item.name;
             return acc;
@@ -184,11 +211,13 @@ async function getNames(ids) {
 }
 
 function buildRecords(items, names) {
-    return items.sort((a, b) => b.count - a.count).map(item => ({
-        id: item.id,
-        name: names[item.id] || '~Unknown~',
-        count: item.count
-    }));
+    return items
+        .filter(item => item.id != 0)
+        .sort((a, b) => b.count - a.count).map(item => ({
+            id: item.id,
+            name: names[item.id] || '~Unknown~',
+            count: item.count
+        }));
 }
 
 function createCell(link, text, cn) {

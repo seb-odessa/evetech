@@ -1,9 +1,11 @@
 #!/bin/bash
 
+PIDFILE=/tmp/update_backward.pid
 CURRENT=${1:-$(date +'%Y-%m-%d' -d "1 day ago")}
 FINISH=${2:-$(date +'%Y-%m-%d' -d "90 day ago")}
 
-echo $$ > /tmp/update_backward.pid
+kill -9 $(cat ${PIDFILE}) && rm -f ${PIDFILE}
+echo $$ > ${PIDFILE}
 
 if [ "$CURRENT" != "$TODAY" ]; then
     while [ "$CURRENT" != "$FINISH" ]; do

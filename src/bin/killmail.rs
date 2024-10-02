@@ -61,9 +61,10 @@ async fn main() -> anyhow::Result<()> {
                 if let Ok(killmail) = api.load::<Killmail>(&uid).await {
                     post(&client, &killmail, &zkbinfo_save_api).await?;
                 } else {
-                    for i in 1..7 {
-                        info!("Retry {i} for {{ {id} {hash} }}");
-                        thread::sleep(Duration::from_secs(3));
+                    for i in 1..11 {
+                        let timeout = i * i;
+                        info!("Will retry after {timeout} seconds for {{ {id} {hash} }}");
+                        thread::sleep(Duration::from_secs(timeout));
                         if let Ok(killmail) = api.load::<Killmail>(&uid).await {
                             post(&client, &killmail, &zkbinfo_save_api).await?;
                             break;

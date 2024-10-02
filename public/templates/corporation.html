@@ -9,7 +9,6 @@
 <body>
     <script type="text/javascript" src="/js/script.js"></script>
     <div class="content">
-        <div class="hidden" id="id">{{id}}</div>
         <div id="portrait" class="portrait">
         </div>
         <div class="info">
@@ -36,33 +35,33 @@
     </div>
     <div class="activity">
     </div>
-        <h4>Activity last 60 days:</h4>
-        <div id="wins_head"></div>
-        <div class="tables-container">
-            <div id="win_ships"></div>
-            <div id="win_systems"></div>
-        </div>
-        <div id="losses_head"></div>
-        <div class="tables-container">
-            <div id="lost_ships"></div>
-            <div id="lost_systems"></div>
-        </div>
-        <div>
-            <h4>Friends</h4>
-        </div>
-        <div class="tables-container">
-            <div id="friendly_chars"></div>
-            <div id="friendly_corps"></div>
-            <div id="friendly_allis"></div>
-        </div>
-        <div>
-            <h4>Enemy</h4>
-        </div>
-        <div class="tables-container">
-            <div id="enemy_chars"></div>
-            <div id="enemy_corps"></div>
-            <div id="enemy_allis"></div>
-        </div>
+    <h4>Activity last 60 days:</h4>
+    <div id="wins_head"></div>
+    <div class="tables-container">
+        <div id="win_ships"></div>
+        <div id="win_systems"></div>
+    </div>
+    <div id="losses_head"></div>
+    <div class="tables-container">
+        <div id="lost_ships"></div>
+        <div id="lost_systems"></div>
+    </div>
+    <div>
+        <h4>Friends</h4>
+    </div>
+    <div class="tables-container">
+        <div id="friendly_chars"></div>
+        <div id="friendly_corps"></div>
+        <div id="friendly_allis"></div>
+    </div>
+    <div>
+        <h4>Enemy</h4>
+    </div>
+    <div class="tables-container">
+        <div id="enemy_chars"></div>
+        <div id="enemy_corps"></div>
+        <div id="enemy_allis"></div>
+    </div>
     </div>
 
     <script>
@@ -70,14 +69,17 @@
             return '<a href="/' + area + '/' + id + '/">' + name + '</a>';
         }
 
-        async function updateContent(id) {
+        async function updateContent() {
             try {
+                const id = Number(`{{id}}`);
+                console.log('id: [' + id + ']');
+
                 const corporation = await getObjectAsync('corporations', id);
                 // console.log(corporation);
 
-                document.title = corporation.name;
                 const corp_name = corporation.name + " [" + corporation.ticker + "]";
                 insertInto('corp_name', makeRef('corporation', id, corp_name));
+                document.title = corp_name;
 
                 if (corporation.alliance_id !== undefined) {
                     const alliance = await getObjectAsync('alliances', corporation.alliance_id);
@@ -88,6 +90,8 @@
                     });
                     const alli_name = alliance.name + " [" + alliance.ticker + "]";
                     insertInto('alli_name', makeRef('alliance', corporation.alliance_id, alli_name));
+
+                    document.title = document.title + ' - ' + alli_name;
 
                 } else {
                     const element = document.getElementById('alliance');
@@ -143,14 +147,14 @@
                     document.getElementById('enemy_chars').appendChild(createTable(link, report.enemy));
                 }
                 {
-                    const link = "https://zkillboard.com/corporation/$(id)/";
+                    const link = "/corporation/$(id)/";
                     const report = await requestFriendsAndEnemyAsync('corporation', 'corporation', id);
                     console.log(report);
                     document.getElementById('friendly_corps').appendChild(createTable(link, report.friends));
                     document.getElementById('enemy_corps').appendChild(createTable(link, report.enemy));
                 }
                 {
-                    const link = "https://zkillboard.com/alliance/$(id)/";
+                    const link = "/alliance/$(id)/";
                     const report = await requestFriendsAndEnemyAsync('alliance', 'corporation', id);
                     console.log(report);
                     document.getElementById('friendly_allis').appendChild(createTable(link, report.friends));
@@ -162,10 +166,7 @@
             }
         }
 
-        const id = {{ id }};
-        console.log('id: [' + id + ']');
-
-        updateContent(id);
+        updateContent();
     </script>
 
     <div align='center'>

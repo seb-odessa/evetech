@@ -22,10 +22,10 @@ echo zkbinfo started...
 sleep 1
 head ~/zkbinfo/logs/zkbinfo.log
 
-#nohup ~/zkbinfo/bin/zkbgui > ~/zkbinfo/logs/zkbgui.log&
-#echo zkbgui started...
-#sleep 1
-#head ~/zkbinfo/logs/zkbgui.log
+nohup ~/zkbinfo/bin/zkbgui > ~/zkbinfo/logs/zkbgui.log&
+echo zkbgui started...
+sleep 1
+head ~/zkbinfo/logs/zkbgui.log
 
 nohup ~/zkbinfo/bin/zkb_client > ~/zkbinfo/logs/zkb_client.log&
 echo zkb_client started...

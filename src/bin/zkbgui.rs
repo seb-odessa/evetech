@@ -27,6 +27,7 @@ async fn main() -> anyhow::Result<()> {
     handlebars.register_template_file("report", "./public/templates/report.html")?;
     handlebars.register_template_file("character", "./public/templates/character.html")?;
     handlebars.register_template_file("corporation", "./public/templates/corporation.html")?;
+    handlebars.register_template_file("alliance", "./public/templates/alliance.html")?;
     handlebars.register_template_file("lost_ship", "./public/templates/lost_ship.html")?;
 
     let context = web::Data::new(handlebars);
@@ -42,6 +43,7 @@ async fn main() -> anyhow::Result<()> {
             .service(report)
             .service(character)
             .service(corporation)
+            .service(alliance)
             .service(character_lost_ships)
             .service(corporation_lost_ships)
             .service(alliance_lost_ships)
@@ -88,13 +90,13 @@ async fn corporation(ctx: Context<'_>, args: web::Path<i32>) -> impl Responder {
     Result::from(ctx.render("corporation", &Id::from(id)))
 }
 
-// #[get("/alliance/{id}/")]
-// async fn alliance(ctx: Context<'_>, args: web::Path<i32>) -> impl Responder {
-//     let id = args.into_inner();
+#[get("/alliance/{id}/")]
+async fn alliance(ctx: Context<'_>, args: web::Path<i32>) -> impl Responder {
+    let id = args.into_inner();
 
-//     info!("/alliance/{id}/");
-//     Result::from(ctx.render("alliance", &Id::from(id)))
-// }
+    info!("/alliance/{id}/");
+    Result::from(ctx.render("alliance", &Id::from(id)))
+}
 
 #[get("/lost/ship/{sid}/character/{id}/")]
 async fn character_lost_ships(ctx: Context<'_>, args: web::Path<(i32, i32)>) -> impl Responder {
