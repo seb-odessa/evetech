@@ -486,6 +486,46 @@ impl Api {
             })
     }
 
+    pub fn lost_in_system(
+        &mut self,
+        rq: SubjectType,
+        system_id: i32,
+    ) -> anyhow::Result<Vec<(i32, i32, i32, i32, i32, i32, i32, String)>> {
+        use schema::killmails;
+        use schema::killmails::dsl::*;
+        use schema::victims;
+
+        let filter: Box<dyn BoxableExpression<_, _, SqlType = diesel::sql_types::Bool>> = match rq {
+            SubjectType::Character(id) => Box::new(victims::character_id.eq(id)),
+            SubjectType::Corporation(id) => Box::new(victims::corporation_id.eq(id)),
+            SubjectType::Alliance(id) => Box::new(victims::alliance_id.eq(id)),
+            SubjectType::Faction(id) => Box::new(victims::faction_id.eq(id)),
+        };
+
+        self.conn
+            .lock()
+            .map_err(|e| anyhow::anyhow!("{e}"))
+            .and_then(|mut conn| {
+                victims::table
+                    .inner_join(killmails.on(killmails::killmail_id.eq(victims::killmail_id)))
+                    .filter(filter)
+                    .filter(killmails::solar_system_id.eq(system_id))
+                    .select((
+                        killmails::killmail_id,
+                        victims::character_id,
+                        victims::corporation_id,
+                        victims::alliance_id,
+                        victims::ship_type_id,
+                        victims::damage_taken,
+                        killmails::solar_system_id,
+                        killmails::killmail_time,
+                    ))
+                    .order(killmails::killmail_time.desc())
+                    .load::<(i32, i32, i32, i32, i32, i32, i32, String)>(&mut *conn)
+                    .map_err(|e| anyhow::anyhow!("{e}"))
+            })
+    }
+
     pub fn activity(&mut self, rq: SubjectType) -> anyhow::Result<HashMap<u32, i32>> {
         use schema::attackers;
         use schema::killmails;

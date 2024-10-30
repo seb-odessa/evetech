@@ -125,15 +125,14 @@
                         + "%) </h4>";
                 }
                 {
+                    const link = "/lost/ship/$(id)/corporation/" + id + "/";
                     const report = await requestShipReportAsync('corporation', id);
                     // console.log(report);
-                    const zkb = "https://zkillboard.com/ship/$(id)/";
-                    document.getElementById('win_ships').appendChild(createTable(zkb, report.win_ships));
-                    const gui = "/lost/ship/$(id)/corporation/" + id + "/";
-                    document.getElementById('lost_ships').appendChild(createTable(gui, report.lost_ships));
+                    document.getElementById('win_ships').appendChild(createTable(link, report.win_ships));
+                    document.getElementById('lost_ships').appendChild(createTable(link, report.lost_ships));
                 }
                 {
-                    const link = "https://zkillboard.com/system/$(id)/";
+                    const link = "/lost/system/$(id)/corporation/" + id + "/";
                     const report = await requestSystemReportAsync('corporation', id);
                     console.log(report);
                     document.getElementById('win_systems').appendChild(createTable(link, report.win_systems));

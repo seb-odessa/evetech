@@ -157,8 +157,8 @@ function formatDate(iso) {
     return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
-async function requestLostAsync(sid, subject, id) {
-    const url = zkbinfo() + `/lost/ship/${sid}/${subject}/${id}`;
+async function requestLostAsync(area, aid, subject, sid) {
+    const url = zkbinfo() + `/lost/${area}/${aid}/${subject}/${sid}`;
     const response = await fetch(url, methodGet());
     if (!response.ok) {
         console.log(`${response.status}: ${response.statusText}`);

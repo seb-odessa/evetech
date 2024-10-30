@@ -43,11 +43,12 @@
 
             async function updateContent() {
                 try {
-                    const sid = Number(`{{sid}}`);
+                    const area = `{{area}}`;
+                    const aid = Number(`{{aid}}`);
                     const subject = `{{subject}}`;
-                    const id = Number(`{{id}}`);
+                    const sid = Number(`{{sid}}`);
 
-                    const data = await requestLostAsync(sid, subject, id);
+                    const data = await requestLostAsync(area, aid, subject, sid);
                     console.log(data);
 
                     const chars = getUniqueValuesFromField(data, 'char');
@@ -59,7 +60,9 @@
                     let names = await getNames([...new Set(ids)]);
                     console.log(names);
 
-                    const title = `The losts of '${names[sid]}' by '${names[id]}'`;
+                    const title = (area === 'ship')
+                        ? `The losts of '${names[aid]}' by '${names[sid]}'`
+                        : `The losts of '${names[sid]}' in '${names[aid]}'`;
                     document.title = title;
                     document.getElementById('header').textContent = title;
                     document.getElementById('lost_ships').appendChild(createTable(data, names));

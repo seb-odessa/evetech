@@ -70,6 +70,7 @@ async fn main() -> anyhow::Result<()> {
     let report_ships_route = format!("/{{rtype:{result}}}/{{subject:{allowed}}}/{{id}}/ships");
     let report_systems_route = format!("/{{rtype:{result}}}/{{subject:{allowed}}}/{{id}}/systems");
     let report_lost_ships_route = format!("/lost/ship/{{sid}}/{{subject:{allowed}}}/{{id}}");
+    let report_lost_in_system_route = format!("/lost/system/{{sid}}/{{subject:{allowed}}}/{{id}}");
 
     HttpServer::new(move || {
         App::new()
@@ -87,7 +88,8 @@ async fn main() -> anyhow::Result<()> {
                     .route(&report_total_route, web::get().to(report_total))
                     .route(&report_ships_route, web::get().to(report_ships))
                     .route(&report_systems_route, web::get().to(report_systems))
-                    .route(&report_lost_ships_route, web::get().to(lost_ships)),
+                    .route(&report_lost_ships_route, web::get().to(lost_ships))
+                    .route(&report_lost_in_system_route, web::get().to(lost_in_system)),
             )
             .service(
                 web::scope("/killmail")
@@ -220,6 +222,19 @@ async fn lost_ships(ctx: Context, args: web::Path<(i32, String, i32)>) -> impl R
 
     Result::from(result)
 }
+
+async fn lost_in_system(ctx: Context, args: web::Path<(i32, String, i32)>) -> impl Responder {
+    let (sid, subj, id) = args.into_inner();
+    let result = ctx
+        .api
+        .lock()
+        .map_err(|e| anyhow!("{e}"))
+        .and_then(|mut api| api.lost_in_system(subject(subj, id), sid))
+        .map_err(|e| anyhow!("{e}"));
+
+    Result::from(result)
+}
+
 
 async fn save(ctx: Context, json: String) -> impl Responder {
     let result = serde_json::from_str::<evetech::killmails::Killmail>(&json)

@@ -47,6 +47,9 @@ async fn main() -> anyhow::Result<()> {
             .service(character_lost_ships)
             .service(corporation_lost_ships)
             .service(alliance_lost_ships)
+            .service(character_lost_in_system)
+            .service(corporation_lost_in_system)
+            .service(alliance_lost_in_system)
     })
     .workers(2)
     .bind((host.as_str(), port))?
@@ -103,7 +106,7 @@ async fn character_lost_ships(ctx: Context<'_>, args: web::Path<(i32, i32)>) -> 
     let (sid, id) = args.into_inner();
 
     info!("/lost/ship/{sid}/character/{id}/");
-    Result::from(ctx.render("lost_ship", &Lost::from(sid, "character", id)))
+    Result::from(ctx.render("lost_ship", &Lost::from("ship", sid, "character", id)))
 }
 
 #[get("/lost/ship/{sid}/corporation/{id}/")]
@@ -111,7 +114,7 @@ async fn corporation_lost_ships(ctx: Context<'_>, args: web::Path<(i32, i32)>) -
     let (sid, id) = args.into_inner();
 
     info!("/lost/ship/{sid}/corporation/{id}/");
-    Result::from(ctx.render("lost_ship", &Lost::from(sid, "corporation", id)))
+    Result::from(ctx.render("lost_ship", &Lost::from("ship", sid, "corporation", id)))
 }
 
 #[get("/lost/ship/{sid}/alliance/{id}/")]
@@ -119,8 +122,33 @@ async fn alliance_lost_ships(ctx: Context<'_>, args: web::Path<(i32, i32)>) -> i
     let (sid, id) = args.into_inner();
 
     info!("/lost/ship/{sid}/alliance/{id}/");
-    Result::from(ctx.render("lost_ship", &Lost::from(sid, "alliance", id)))
+    Result::from(ctx.render("lost_ship", &Lost::from("ship", sid, "alliance", id)))
 }
+
+#[get("/lost/system/{sid}/character/{id}/")]
+async fn character_lost_in_system(ctx: Context<'_>, args: web::Path<(i32, i32)>) -> impl Responder {
+    let (sid, id) = args.into_inner();
+
+    info!("/lost/ship/{sid}/character/{id}/");
+    Result::from(ctx.render("lost_ship", &Lost::from("system", sid, "character", id)))
+}
+
+#[get("/lost/system/{sid}/corporation/{id}/")]
+async fn corporation_lost_in_system(ctx: Context<'_>, args: web::Path<(i32, i32)>) -> impl Responder {
+    let (sid, id) = args.into_inner();
+
+    info!("/lost/ship/{sid}/corporation/{id}/");
+    Result::from(ctx.render("lost_ship", &Lost::from("system", sid, "corporation", id)))
+}
+
+#[get("/lost/system/{sid}/alliance/{id}/")]
+async fn alliance_lost_in_system(ctx: Context<'_>, args: web::Path<(i32, i32)>) -> impl Responder {
+    let (sid, id) = args.into_inner();
+
+    info!("/lost/ship/{sid}/alliance/{id}/");
+    Result::from(ctx.render("lost_ship", &Lost::from("system", sid, "alliance", id)))
+}
+
 pub struct Result {
     content: String,
 }
@@ -187,16 +215,18 @@ impl Id {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Lost {
-    sid: i32,
+    area: String,
+    aid: i32,
     subject: String,
-    id: i32,
+    sid: i32,
 }
 impl Lost {
-    pub fn from<S: Into<String>>(sid: i32, subject: S, id: i32) -> Self {
+    pub fn from<S: Into<String>>(area: S, aid: i32, subject: S, sid: i32) -> Self {
         Self {
-            sid,
+            area: area.into(),
+            aid,
             subject: subject.into(),
-            id,
+            sid,
         }
     }
 }
