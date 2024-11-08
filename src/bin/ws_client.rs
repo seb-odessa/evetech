@@ -1,7 +1,7 @@
 use evetech::killmails::killmail::Killmail;
 
 use env_logger;
-use log::{error, info, debug};
+use log::{debug, error, info, warn};
 use std::env;
 
 use futures_util::SinkExt;
@@ -69,8 +69,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-
-#[derive(Debug )]
+#[derive(Debug)]
 struct Saver {
     api: String,
     client: reqwest::Client,
@@ -96,13 +95,14 @@ impl Saver {
     }
 
     async fn post(&self, killmail: &Killmail) -> anyhow::Result<()> {
-        info!(
-            "id: {} system: {} timestamp: {}",
-            killmail.killmail_id, killmail.solar_system_id, killmail.killmail_time
-        );
+        let tm = &killmail.killmail_time;
+        let id = killmail.killmail_id;
+        let sid = killmail.solar_system_id;
+        info!("ET: {tm} https://zkillboard.com/kill/{id}/ https://zkillboard.com/system/{sid}/");
 
         let res = self.client.post(&self.api).json(&killmail).send().await;
         if res.is_err() {
+            warn!("{:#?}", res);
             sleep(Duration::from_secs(1)).await;
             self.client.post(&self.api).json(&killmail).send().await?;
         }
